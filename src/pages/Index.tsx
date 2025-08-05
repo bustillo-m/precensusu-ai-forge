@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog } from "lucide-react";
+import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload } from "lucide-react";
 import { ChatInterface } from "@/components/ChatInterface";
+import { JsonUploader } from "@/components/JsonUploader";
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,10 +24,16 @@ const Index = () => {
             <a href="#pricing" className="text-muted-foreground hover:text-foreground">Precios</a>
             <a href="#about" className="text-muted-foreground hover:text-foreground">Nosotros</a>
           </nav>
-          <Button onClick={() => setShowChat(true)} className="gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Probar Chat IA
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowUploader(true)} variant="outline" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Subir JSON
+            </Button>
+            <Button onClick={() => setShowChat(true)} className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Probar Chat IA
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -47,6 +55,10 @@ const Index = () => {
           <Button size="lg" onClick={() => setShowChat(true)} className="gap-2">
             <Zap className="h-5 w-5" />
             Comenzar Automatización
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => setShowUploader(true)} className="gap-2">
+            <Upload className="h-5 w-5" />
+            Subir JSON a n8n
           </Button>
           <Button size="lg" variant="outline">
             <Users className="h-5 w-5 mr-2" />
@@ -353,6 +365,9 @@ const Index = () => {
 
       {/* Chat Interface */}
       {showChat && <ChatInterface onClose={() => setShowChat(false)} />}
+      
+      {/* JSON Uploader */}
+      {showUploader && <JsonUploader onClose={() => setShowUploader(false)} />}
     </div>
   );
 };
