@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X, Send, Bot, User, Loader2, Code, CheckCircle } from "lucide-react";
+import { X, Send, Bot, User, Loader2, Code, CheckCircle, XCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   id: string;
@@ -12,6 +14,9 @@ interface Message {
   aiType?: "chatgpt" | "claude" | "deepseek" | "n8n";
   timestamp: Date;
   isTyping?: boolean;
+  workflowStatus?: 'sending' | 'success' | 'error';
+  workflowError?: string;
+  workflowId?: string;
 }
 
 interface ChatInterfaceProps {
@@ -31,6 +36,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,6 +78,77 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       default:
         return <Bot className="w-6 h-6 text-primary" />;
     }
+  };
+
+  const sendWorkflowToN8n = async (workflowJson: any, messageId: string) => {
+    try {
+      // Update message status to sending
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, workflowStatus: 'sending' } 
+          : msg
+      ));
+
+      const { data, error } = await supabase.functions.invoke('send-to-n8n', {
+        body: { workflow: workflowJson }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data.success) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? { 
+                ...msg, 
+                workflowStatus: 'success',
+                workflowId: data.workflowId,
+                content: msg.content + `\n\n🎉 ${data.message}`
+              } 
+            : msg
+        ));
+        
+        toast({
+          title: "¡Éxito!",
+          description: data.message,
+        });
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error sending to n8n:', error);
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { 
+              ...msg, 
+              workflowStatus: 'error',
+              workflowError: error.message,
+              content: msg.content + `\n\n❌ Error al enviar a n8n: ${error.message}`
+            } 
+          : msg
+      ));
+      
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `No se pudo enviar la automatización a n8n: ${error.message}`,
+      });
+    }
+  };
+
+  const extractWorkflowFromContent = (content: string) => {
+    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[1]);
+      } catch (e) {
+        console.error('Error parsing JSON:', e);
+        return null;
+      }
+    }
+    return null;
   };
 
   const simulateAIResponse = async (userMessage: string) => {
@@ -152,13 +229,25 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   "versionId": "1.0"
 }`;
 
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
+    const finalMessageId = Date.now().toString();
+    const aiMessage = {
+      id: finalMessageId,
       content: `¡Automatización completada! Aquí tienes el código JSON listo para importar en n8n:\n\n\`\`\`json\n${jsonCode}\n\`\`\`\n\n✅ **Workflow validado y optimizado**\n✅ **Listo para importar en n8n**\n✅ **Incluye validaciones integradas**\n\n¿Te gustaría que ajuste algo específico o genere otra automatización?`,
-      sender: "ai",
-      aiType: "n8n",
+      sender: "ai" as const,
+      aiType: "n8n" as const,
       timestamp: new Date()
-    }]);
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
+    // Extract and send workflow to n8n
+    const workflow = extractWorkflowFromContent(aiMessage.content);
+    if (workflow) {
+      // Wait a moment for the message to be displayed
+      setTimeout(() => {
+        sendWorkflowToN8n(workflow, finalMessageId);
+      }, 1000);
+    }
 
     setIsLoading(false);
   };
@@ -258,7 +347,41 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
                       <span>Procesando...</span>
                     </div>
                   ) : (
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    <>
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      
+                      {/* Workflow status indicator */}
+                      {message.sender === 'ai' && message.aiType === 'n8n' && message.workflowStatus && (
+                        <div className="mt-3 p-3 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            {message.workflowStatus === 'sending' && (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                                <span className="text-sm text-blue-600">Enviando automatización a n8n...</span>
+                              </>
+                            )}
+                            {message.workflowStatus === 'success' && (
+                              <>
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-sm text-green-600">Automatización enviada exitosamente</span>
+                                {message.workflowId && (
+                                  <span className="text-xs text-muted-foreground">(ID: {message.workflowId})</span>
+                                )}
+                              </>
+                            )}
+                            {message.workflowStatus === 'error' && (
+                              <>
+                                <XCircle className="h-4 w-4 text-red-500" />
+                                <span className="text-sm text-red-600">Error al enviar automatización</span>
+                                {message.workflowError && (
+                                  <span className="text-xs text-muted-foreground">({message.workflowError})</span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 

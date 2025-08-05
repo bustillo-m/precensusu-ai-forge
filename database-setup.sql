@@ -84,3 +84,29 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Create n8n_workflows table to track sent workflows
+CREATE TABLE public.n8n_workflows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
+  n8n_workflow_id TEXT,
+  workflow_name TEXT NOT NULL,
+  workflow_data JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'active', 'inactive', 'error')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Enable RLS for n8n_workflows
+ALTER TABLE public.n8n_workflows ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for n8n_workflows
+CREATE POLICY "Users can view their own n8n workflows" ON public.n8n_workflows
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "Users can create their own n8n workflows" ON public.n8n_workflows
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update their own n8n workflows" ON public.n8n_workflows
+  FOR UPDATE USING (user_id = auth.uid());
