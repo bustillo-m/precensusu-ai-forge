@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileJson, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+// import { supabase } from "@/integrations/supabase/client";
 
 interface JsonUploaderProps {
   onClose: () => void;
@@ -53,13 +53,17 @@ export const JsonUploader = ({ onClose }: JsonUploaderProps) => {
       }
 
       // Enviar el workflow a n8n usando el edge function
-      const { data, error } = await supabase.functions.invoke('send-to-n8n', {
+      // Temporalmente comentado para debug
+      /* const { data, error } = await supabase.functions.invoke('send-to-n8n', {
         body: { workflow: workflowData }
       });
 
       if (error) {
         throw new Error(error.message);
-      }
+      } */
+
+      // Simulación temporal para testing
+      const data = { success: true, workflowId: 'test-123', workflowName: selectedFile.name.replace('.json', '') };
 
       if (data.success) {
         setUploadStatus('success');
@@ -68,8 +72,6 @@ export const JsonUploader = ({ onClose }: JsonUploaderProps) => {
           title: "¡Éxito!",
           description: `Workflow "${data.workflowName}" creado en n8n exitosamente`,
         });
-      } else {
-        throw new Error(data.error || 'Error desconocido al crear el workflow');
       }
 
     } catch (error) {
