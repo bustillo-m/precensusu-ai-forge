@@ -15,7 +15,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Bot className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">precensusu AI</h1>
+            <h1 className="text-2xl font-bold">Precensus AI</h1>
           </div>
           <nav className="hidden md:flex space-x-6">
             <a href="#services" className="text-muted-foreground hover:text-foreground">Servicios</a>
@@ -195,26 +195,51 @@ const Index = () => {
             <h3 className="text-3xl font-bold mb-4">Planes y Precios</h3>
             <p className="text-muted-foreground">Elige el plan que mejor se adapte a tu empresa</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle>Básico</CardTitle>
-                <CardDescription>Para pequeñas empresas</CardDescription>
-                <div className="text-3xl font-bold">$299<span className="text-base font-normal">/mes</span></div>
+                <CardTitle>Freemium</CardTitle>
+                <CardDescription>Acceso básico al chat</CardDescription>
+                <div className="text-3xl font-bold">$0</div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    1 Chatbot personalizado
+                    Chat con IA
+                  </li>
+                  <li className="flex items-center gap-2 text-muted-foreground">
+                    <span className="h-4 w-4 rounded-full border border-muted-foreground/30"></span>
+                    Sin asesoría empresarial
+                  </li>
+                  <li className="flex items-center gap-2 text-muted-foreground">
+                    <span className="h-4 w-4 rounded-full border border-muted-foreground/30"></span>
+                    Sin agentes
+                  </li>
+                </ul>
+                <Button className="w-full mt-6" variant="outline">Comenzar</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Started</CardTitle>
+                <CardDescription>Para empezar</CardDescription>
+                <div className="text-3xl font-bold">$149</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    1 Consultoría IA
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    5 Automatizaciones n8n
+                    1 Automatización simple
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Soporte por email
+                    Importación directa n8n
                   </li>
                 </ul>
                 <Button className="w-full mt-6">Comenzar</Button>
@@ -224,27 +249,52 @@ const Index = () => {
             <Card className="border-primary">
               <CardHeader>
                 <Badge className="w-fit mb-2">Más Popular</Badge>
-                <CardTitle>Profesional</CardTitle>
+                <CardTitle>Pro</CardTitle>
                 <CardDescription>Para empresas en crecimiento</CardDescription>
-                <div className="text-3xl font-bold">$799<span className="text-base font-normal">/mes</span></div>
+                <div className="text-3xl font-bold">$299</div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    3 Chatbots personalizados
+                    4 Asesorías IA
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    15 Automatizaciones n8n
+                    3 Agentes/Automatizaciones
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Consultoría mensual
+                    Chat ilimitado
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Soporte prioritario
+                    Importación directa n8n
+                  </li>
+                </ul>
+                <Button className="w-full mt-6">Comenzar</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Premium</CardTitle>
+                <CardDescription>Para empresas establecidas</CardDescription>
+                <div className="text-3xl font-bold">$599</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    4 Automatizaciones simples
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    1 Automatización avanzada
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    Importación directa n8n
                   </li>
                 </ul>
                 <Button className="w-full mt-6">Comenzar</Button>
@@ -255,25 +305,25 @@ const Index = () => {
               <CardHeader>
                 <CardTitle>Enterprise</CardTitle>
                 <CardDescription>Para grandes corporaciones</CardDescription>
-                <div className="text-3xl font-bold">Personalizado</div>
+                <div className="text-3xl font-bold">$1,229</div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Chatbots ilimitados
+                    7 Automatizaciones simples
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Automatizaciones ilimitadas
+                    3 Automatizaciones avanzadas
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Consultoría dedicada
+                    Importación directa n8n
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Soporte 24/7
+                    Revisión humana
                   </li>
                 </ul>
                 <Button className="w-full mt-6" variant="outline">Contactar</Button>
@@ -288,7 +338,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Bot className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">precensusu AI</span>
+            <span className="text-xl font-bold">Precensus AI</span>
           </div>
           <p className="text-muted-foreground mb-4">
             Transformando empresas con Inteligencia Artificial
