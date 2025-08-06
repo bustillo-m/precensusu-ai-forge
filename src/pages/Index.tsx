@@ -3,11 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload } from "lucide-react";
-import { ChatInterface } from "@/components/ChatInterface";
 import { JsonUploader } from "@/components/JsonUploader";
 
 const Index = () => {
-  const [showChat, setShowChat] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
 
   return (
@@ -29,9 +27,9 @@ const Index = () => {
               <Upload className="h-4 w-4" />
               Subir JSON
             </Button>
-            <Button onClick={() => setShowChat(true)} className="gap-2">
+            <Button onClick={() => window.location.href = '/auth'} className="gap-2">
               <MessageSquare className="h-4 w-4" />
-              Probar Chat IA
+              Iniciar Sesión / Chat IA
             </Button>
           </div>
         </div>
@@ -52,7 +50,7 @@ const Index = () => {
           Nuestro sistema multi-IA genera código JSON optimizado para n8n.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
-          <Button size="lg" onClick={() => setShowChat(true)} className="gap-2">
+          <Button size="lg" onClick={() => window.location.href = '/auth'} className="gap-2">
             <Zap className="h-5 w-5" />
             Comenzar Automatización
           </Button>
@@ -363,9 +361,6 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Chat Interface */}
-      {showChat && <ChatInterface onClose={() => setShowChat(false)} />}
-      
       {/* JSON Uploader */}
       {showUploader && <JsonUploader onClose={() => setShowUploader(false)} />}
     </div>
