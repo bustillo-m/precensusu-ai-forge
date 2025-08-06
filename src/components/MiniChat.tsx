@@ -17,7 +17,7 @@ export const MiniChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '¡Hola! 👋 Soy tu asistente de IA especializado en automatización empresarial. Puedo ayudarte con información sobre agentes de IA, nuestra empresa Precensus AI, y cómo nuestros servicios pueden transformar tu negocio. ¿En qué puedo ayudarte?',
+      text: '¡Hola! 👋 Soy tu consultor de IA especializado en automatización empresarial. Te ofrezco una CONSULTORÍA GRATUITA personalizada para analizar tu negocio y recomendarte las mejores automatizaciones. Para empezar, cuéntame: ¿Qué tipo de empresa tienes y cuáles son los procesos que más tiempo te consumen?',
       isBot: true,
       timestamp: new Date()
     }
@@ -98,7 +98,7 @@ export const MiniChat = () => {
           <MessageSquare className="h-6 w-6" />
         </Button>
         <div className="absolute -top-12 right-0 bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm whitespace-nowrap animate-pulse">
-          ¡Pregúntame sobre IA!
+          ¡Consultoría IA Gratuita!
         </div>
       </div>
     );
@@ -111,7 +111,7 @@ export const MiniChat = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Asistente IA Precensus</CardTitle>
+              <CardTitle className="text-lg">Consultoría IA Gratuita</CardTitle>
             </div>
             <div className="flex gap-1">
               <Button
@@ -179,7 +179,7 @@ export const MiniChat = () => {
           </div>
           <div className="flex gap-2">
             <Input
-              placeholder="Pregúntame sobre agentes de IA..."
+              placeholder="Cuéntame sobre tu empresa..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}

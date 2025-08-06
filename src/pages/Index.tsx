@@ -21,7 +21,7 @@ const Index = () => {
           <nav className="hidden md:flex space-x-6">
             <a href="#services" className="text-muted-foreground hover:text-foreground">Servicios</a>
             <a href="#utilities" className="text-muted-foreground hover:text-foreground">Utilidades</a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground">Precios</a>
+            <a href="#utilities" className="text-muted-foreground hover:text-foreground">Utilidades</a>
             <a href="#about" className="text-muted-foreground hover:text-foreground">Nosotros</a>
           </nav>
           <div className="flex gap-2">
@@ -497,171 +497,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="bg-muted/50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl font-bold mb-4">Planes y Precios</h3>
-            <p className="text-muted-foreground">Elige el plan que mejor se adapte a tu empresa</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle>FREEMIUM</CardTitle>
-                <CardDescription>Prueba gratuita</CardDescription>
-                <div className="text-3xl font-bold">$0<span className="text-base font-normal text-muted-foreground">/mes</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    1 asesoría IA gratis
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Acceso al chat vía web
-                  </li>
-                  <li className="flex items-center gap-2 text-muted-foreground">
-                    <span className="h-4 w-4 rounded-full border border-muted-foreground/30"></span>
-                    Sin automatizaciones
-                  </li>
-                  <li className="flex items-center gap-2 text-muted-foreground">
-                    <span className="h-4 w-4 rounded-full border border-muted-foreground/30"></span>
-                    Sin agentes
-                  </li>
-                </ul>
-                <Button className="w-full mt-6" variant="outline">Comenzar</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>INICIO</CardTitle>
-                <CardDescription>Para empezar a automatizar</CardDescription>
-                <div className="text-3xl font-bold">$299<span className="text-base font-normal text-muted-foreground">/mes</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    1 automatización completa
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    2 horas de asesoría mensual
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Soporte WhatsApp
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Integración n8n incluida
-                  </li>
-                </ul>
-                <Button className="w-full mt-6">Comenzar</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary">
-              <CardHeader>
-                <Badge className="w-fit mb-2">⭐ MÁS POPULAR</Badge>
-                <CardTitle>PROFESIONAL</CardTitle>
-                <CardDescription>Para empresas en crecimiento</CardDescription>
-                <div className="text-3xl font-bold">$599<span className="text-base font-normal text-muted-foreground">/mes</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    3 automatizaciones implementadas
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    4 horas de asesoría mensual
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Chatbot multicanal
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Mantenimiento incluido
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Análisis de ROI
-                  </li>
-                </ul>
-                <Button className="w-full mt-6">Comenzar</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>EMPRESA</CardTitle>
-                <CardDescription>Para empresas establecidas</CardDescription>
-                <div className="text-3xl font-bold">$1,199<span className="text-base font-normal text-muted-foreground">/mes</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    5 automatizaciones + chatbots
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    8 horas de asesoría mensual
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Implementación prioritaria
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Revisión y optimización
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Integraciones avanzadas
-                  </li>
-                </ul>
-                <Button className="w-full mt-6">Comenzar</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>ENTERPRISE</CardTitle>
-                <CardDescription>Solución empresarial completa</CardDescription>
-                <div className="text-3xl font-bold">$2,499<span className="text-base font-normal text-muted-foreground">/mes base</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Automatizaciones ilimitadas
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Asesor dedicado (20h/mes)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    SLA del 99,9%
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Marca blanca
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Transformación digital completa
-                  </li>
-                </ul>
-                <Button className="w-full mt-6" variant="outline">Contactar</Button>
-              </CardContent>
-            </Card>
+      {/* CTA Section */}
+      <section className="bg-primary text-primary-foreground py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h3 className="text-3xl font-bold mb-4">¿Listo para Automatizar tu Empresa?</h3>
+          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+            Comienza con una consultoría gratuita personalizada. Nuestro asistente de IA analizará tu negocio y te recomendará las mejores automatizaciones.
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button size="lg" variant="secondary" onClick={() => window.location.href = '/auth'} className="gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Consultoría IA Gratuita
+            </Button>
+            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary gap-2">
+              <Phone className="h-5 w-5" />
+              Llamada con Experto
+            </Button>
           </div>
         </div>
       </section>
