@@ -164,7 +164,7 @@ export function ChatSidebar({
 
   return (
     <>
-      <Sidebar className={collapsed ? "w-14" : "w-80"} collapsible="icon">
+      <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
         <SidebarHeader className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">

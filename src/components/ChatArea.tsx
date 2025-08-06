@@ -518,21 +518,21 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
       </div>
 
       {/* Input */}
-      <div className="border-t p-4">
-        <div className="flex gap-2">
+      <div className="border-t p-6">
+        <div className="flex gap-3 max-w-4xl mx-auto">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Describe el proceso que quieres automatizar..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 h-12 rounded-full px-6 text-base"
           />
-          <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+          <Button onClick={handleSend} disabled={isLoading || !input.trim()} size="lg" className="rounded-full h-12 w-12 p-0">
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             )}
           </Button>
         </div>
