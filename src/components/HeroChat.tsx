@@ -16,7 +16,7 @@ export const HeroChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '¡Hola! 👋 Soy tu consultor de IA especializado en automatización empresarial. Te ofrezco una CONSULTORÍA GRATUITA personalizada para analizar tu negocio y recomendarte las mejores automatizaciones. Para empezar, cuéntame: ¿Qué tipo de empresa tienes y cuáles son los procesos que más tiempo te consumen?',
+      text: '¿Necesitas información? Pregúntame lo que quieras 💬',
       isBot: true,
       timestamp: new Date()
     }
@@ -87,22 +87,22 @@ export const HeroChat = () => {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto mt-8">
-      <Card className="border border-border/50 shadow-lg">
-        <CardContent className="p-6">
-          <div className="h-96 overflow-y-auto mb-4 space-y-4 p-4 bg-muted/30 rounded-lg">
+    <div className="w-full max-w-2xl mx-auto mt-6">
+      <Card className="border border-border/50 shadow-md rounded-3xl overflow-hidden">
+        <CardContent className="p-4">
+          <div className="h-64 overflow-y-auto mb-3 space-y-3 p-3 bg-muted/20 rounded-2xl">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${message.isBot ? 'justify-start' : 'justify-end'}`}
+                className={`flex gap-2 ${message.isBot ? 'justify-start' : 'justify-end'}`}
               >
                 {message.isBot && (
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="h-4 w-4 text-primary" />
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <Bot className="h-3 w-3 text-primary" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] px-4 py-3 rounded-lg text-sm leading-relaxed ${
+                  className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm ${
                     message.isBot
                       ? 'bg-background border text-foreground'
                       : 'bg-primary text-primary-foreground'
@@ -111,44 +111,44 @@ export const HeroChat = () => {
                   {message.text}
                 </div>
                 {!message.isBot && (
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                    <User className="h-4 w-4 text-primary-foreground" />
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                    <User className="h-3 w-3 text-primary-foreground" />
                   </div>
                 )}
               </div>
             ))}
             {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                  <Bot className="h-4 w-4 text-primary" />
+              <div className="flex gap-2 justify-start">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                  <Bot className="h-3 w-3 text-primary" />
                 </div>
-                <div className="bg-background border px-4 py-3 rounded-lg text-sm">
+                <div className="bg-background border px-3 py-2 rounded-2xl text-sm">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Input
-              placeholder="Cuéntame sobre tu empresa y procesos..."
+              placeholder="Escribe tu pregunta..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 rounded-full border-border/50"
             />
             <Button
               onClick={sendMessage}
               disabled={isLoading || !inputMessage.trim()}
               size="sm"
-              className="px-4"
+              className="px-3 rounded-full"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3" />
             </Button>
           </div>
         </CardContent>
