@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload, Target, TrendingUp, Clock, Shield, Mail, Phone, FileText, Calendar, Database, BarChart3 } from "lucide-react";
 import { JsonUploader } from "@/components/JsonUploader";
-import { MiniChat } from "@/components/MiniChat";
+import { HeroChat } from "@/components/HeroChat";
 
 const Index = () => {
   const [showUploader, setShowUploader] = useState(false);
@@ -51,7 +51,11 @@ const Index = () => {
           Implementamos chatbots y automatizaciones personalizadas que revolucionan la eficiencia de tu empresa. 
           Nuestro sistema multi-IA genera código JSON optimizado para n8n.
         </p>
-        <div className="flex gap-4 justify-center flex-wrap">
+        
+        {/* Hero Chat */}
+        <HeroChat />
+        
+        <div className="flex gap-4 justify-center flex-wrap mt-8">
           <Button size="lg" onClick={() => window.location.href = '/auth'} className="gap-2">
             <Zap className="h-5 w-5" />
             Comenzar Automatización
@@ -537,9 +541,6 @@ const Index = () => {
 
       {/* JSON Uploader */}
       {showUploader && <JsonUploader onClose={() => setShowUploader(false)} />}
-      
-      {/* Mini Chat */}
-      <MiniChat />
     </div>
   );
 };
