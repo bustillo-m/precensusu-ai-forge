@@ -320,7 +320,7 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
   };
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     let chatId = currentChatId;
     
@@ -346,25 +346,46 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput("");
+    setIsLoading(true);
 
     // Guardar mensaje del usuario
     await saveMessage(userMessage);
 
-    // Si es el primer mensaje, mostrar mensaje de bienvenida primero
-    if (messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: `welcome-${Date.now()}`,
-        content: "¡Hola! Soy tu asistente de automatización IA. Te ayudaré a crear automatizaciones personalizadas para tu empresa usando un sistema multi-IA (ChatGPT → Claude → DeepSeek → N8N Assistant). Para comenzar, cuéntame: ¿qué proceso te gustaría automatizar?",
+    try {
+      // Call the AI chat function
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: userInput,
+          sessionId: chatId
+        }
+      });
+
+      if (error) {
+        console.error('Error calling chat-ai function:', error);
+        throw new Error(error.message);
+      }
+
+      // The AI response is already saved in the database by the edge function
+      // Just fetch the updated messages
+      await fetchMessages();
+      
+    } catch (error) {
+      console.error('Error in chat:', error);
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: 'Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.',
         sender: "ai",
         created_at: new Date().toISOString()
       };
 
-      setMessages(prev => [...prev, welcomeMessage]);
-      await saveMessage(welcomeMessage);
+      setMessages(prev => [...prev, errorMessage]);
+      await saveMessage(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-
-    await simulateAIResponse(input, chatId);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
