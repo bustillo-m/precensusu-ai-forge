@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload } from "lucide-react";
+import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload, Target, TrendingUp, Clock, Shield, Mail, Phone, FileText, Calendar, Database, BarChart3 } from "lucide-react";
 import { JsonUploader } from "@/components/JsonUploader";
 
 const Index = () => {
@@ -19,6 +19,7 @@ const Index = () => {
           </div>
           <nav className="hidden md:flex space-x-6">
             <a href="#services" className="text-muted-foreground hover:text-foreground">Servicios</a>
+            <a href="#utilities" className="text-muted-foreground hover:text-foreground">Utilidades</a>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground">Precios</a>
             <a href="#about" className="text-muted-foreground hover:text-foreground">Nosotros</a>
           </nav>
@@ -193,6 +194,303 @@ const Index = () => {
               </div>
               <h4 className="font-semibold mb-2">4. N8N Assistant</h4>
               <p className="text-sm text-muted-foreground">Produce JSON final validado</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Agent Utilities Section */}
+      <section id="utilities" className="bg-muted/50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h3 className="text-3xl font-bold mb-4">Utilidades de Nuestros Agentes</h3>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Descubre todo lo que puedes automatizar con nuestros agentes inteligentes. Ejemplos reales de aplicación.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {/* Customer Service Agent */}
+            <Card className="h-full">
+              <CardHeader>
+                <MessageSquare className="h-10 w-10 text-primary mb-3" />
+                <CardTitle className="text-xl">Agente de Atención al Cliente</CardTitle>
+                <CardDescription>
+                  Automatiza respuestas y gestiona consultas 24/7
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Respuestas automáticas por WhatsApp</p>
+                      <p className="text-xs text-muted-foreground">Conecta con tu CRM y responde consultas de productos instantáneamente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Escalamiento inteligente</p>
+                      <p className="text-xs text-muted-foreground">Deriva casos complejos a humanos automáticamente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Historial de conversaciones</p>
+                      <p className="text-xs text-muted-foreground">Mantiene contexto y guarda todas las interacciones</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Sales Agent */}
+            <Card className="h-full">
+              <CardHeader>
+                <Target className="h-10 w-10 text-primary mb-3" />
+                <CardTitle className="text-xl">Agente de Ventas</CardTitle>
+                <CardDescription>
+                  Califica leads y automatiza seguimiento de prospectos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Calificación automática de leads</p>
+                      <p className="text-xs text-muted-foreground">Analiza formularios web y asigna puntuación de interés</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Emails de seguimiento personalizados</p>
+                      <p className="text-xs text-muted-foreground">Envía secuencias basadas en comportamiento del usuario</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Reportes de conversión</p>
+                      <p className="text-xs text-muted-foreground">Dashboard con métricas de pipeline y forecasting</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Operations Agent */}
+            <Card className="h-full">
+              <CardHeader>
+                <Cog className="h-10 w-10 text-primary mb-3" />
+                <CardTitle className="text-xl">Agente de Operaciones</CardTitle>
+                <CardDescription>
+                  Optimiza procesos internos y gestiona tareas repetitivas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Procesamiento de facturas</p>
+                      <p className="text-xs text-muted-foreground">Extrae datos, valida información y actualiza sistemas contables</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Gestión de inventario</p>
+                      <p className="text-xs text-muted-foreground">Monitorea stock y genera órdenes de compra automáticamente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Reportes ejecutivos</p>
+                      <p className="text-xs text-muted-foreground">Consolida datos de múltiples fuentes en dashboards</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Marketing Agent */}
+            <Card className="h-full">
+              <CardHeader>
+                <TrendingUp className="h-10 w-10 text-primary mb-3" />
+                <CardTitle className="text-xl">Agente de Marketing</CardTitle>
+                <CardDescription>
+                  Automatiza campañas y personaliza experiencias
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Segmentación automática</p>
+                      <p className="text-xs text-muted-foreground">Clasifica clientes por comportamiento y envía contenido personalizado</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Campañas multicanal</p>
+                      <p className="text-xs text-muted-foreground">Coordina email, SMS y redes sociales desde un solo flujo</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Análisis de rendimiento</p>
+                      <p className="text-xs text-muted-foreground">Optimiza campañas basado en métricas de engagement</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* HR Agent */}
+            <Card className="h-full">
+              <CardHeader>
+                <Users className="h-10 w-10 text-primary mb-3" />
+                <CardTitle className="text-xl">Agente de Recursos Humanos</CardTitle>
+                <CardDescription>
+                  Gestiona talento y automatiza procesos de RRHH
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Screening de candidatos</p>
+                      <p className="text-xs text-muted-foreground">Analiza CVs y programa entrevistas automáticamente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Onboarding automatizado</p>
+                      <p className="text-xs text-muted-foreground">Guía nuevos empleados y asigna tareas de integración</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Evaluaciones de desempeño</p>
+                      <p className="text-xs text-muted-foreground">Recopila feedback 360° y genera reportes de desarrollo</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Finance Agent */}
+            <Card className="h-full">
+              <CardHeader>
+                <BarChart3 className="h-10 w-10 text-primary mb-3" />
+                <CardTitle className="text-xl">Agente Financiero</CardTitle>
+                <CardDescription>
+                  Automatiza contabilidad y análisis financiero
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Conciliación bancaria</p>
+                      <p className="text-xs text-muted-foreground">Importa extractos y reconcilia transacciones automáticamente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Alertas de cash flow</p>
+                      <p className="text-xs text-muted-foreground">Monitorea liquidez y notifica sobre riesgos financieros</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Reportes regulatorios</p>
+                      <p className="text-xs text-muted-foreground">Genera declaraciones fiscales y reportes de cumplimiento</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Use Cases Examples */}
+          <div className="bg-background rounded-lg p-8 border">
+            <h4 className="text-2xl font-bold text-center mb-8">Casos de Uso Reales</h4>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h5 className="text-lg font-semibold text-primary">E-commerce</h5>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Seguimiento automático de pedidos</p>
+                      <p className="text-sm text-muted-foreground">Notifica a clientes sobre el estado de envío vía WhatsApp/Email</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Database className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Gestión de devoluciones</p>
+                      <p className="text-sm text-muted-foreground">Procesa solicitudes de reembolso y actualiza inventario automáticamente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Recuperación de carritos abandonados</p>
+                      <p className="text-sm text-muted-foreground">Envía emails personalizados con descuentos para recuperar ventas</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <h5 className="text-lg font-semibold text-primary">Servicios Profesionales</h5>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Programación inteligente de citas</p>
+                      <p className="text-sm text-muted-foreground">Coordina calendarios múltiples y envía recordatorios automatizados</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Generación de propuestas</p>
+                      <p className="text-sm text-muted-foreground">Crea cotizaciones personalizadas basadas en templates y datos del cliente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Seguimiento de facturas</p>
+                      <p className="text-sm text-muted-foreground">Envía recordatorios de pago y gestiona cobranza automáticamente</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-center mt-8">
+              <Button size="lg" onClick={() => window.location.href = '/auth'} className="gap-2">
+                <ArrowRight className="h-5 w-5" />
+                Crear Mi Primer Agente
+              </Button>
             </div>
           </div>
         </div>
