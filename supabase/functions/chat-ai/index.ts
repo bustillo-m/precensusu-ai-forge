@@ -39,36 +39,47 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    // Verify user authentication
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // For landing page chat, we'll allow anonymous access
+    let user = null
+    if (sessionId !== 'landing-page-chat') {
+      // Verify user authentication for other sessions
+      const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser()
+      if (authError || !authUser) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      user = authUser
     }
 
-    // Save user message to database
-    const { error: messageError } = await supabaseClient
-      .from('messages')
-      .insert({
-        chat_session_id: sessionId,
-        content: message,
-        role: 'user',
-        user_id: user.id
-      })
+    // Save user message to database (only for authenticated users)
+    if (user) {
+      const { error: messageError } = await supabaseClient
+        .from('messages')
+        .insert({
+          chat_session_id: sessionId,
+          content: message,
+          role: 'user',
+          user_id: user.id
+        })
 
-    if (messageError) {
-      console.error('Error saving user message:', messageError)
+      if (messageError) {
+        console.error('Error saving user message:', messageError)
+      }
     }
 
-    // Get conversation history for context
-    const { data: messages } = await supabaseClient
-      .from('messages')
-      .select('content, role')
-      .eq('chat_session_id', sessionId)
-      .order('created_at', { ascending: true })
-      .limit(10)
+    // Get conversation history for context (only for authenticated users)
+    let messages = []
+    if (user) {
+      const { data: messageHistory } = await supabaseClient
+        .from('messages')
+        .select('content, role')
+        .eq('chat_session_id', sessionId)
+        .order('created_at', { ascending: true })
+        .limit(10)
+      messages = messageHistory || []
+    }
 
     // Prepare messages for OpenAI
     const conversationHistory = messages?.map(msg => ({
@@ -76,8 +87,66 @@ serve(async (req) => {
       content: msg.content
     })) || []
 
-    // Add system message for automation context
-    const systemMessage = {
+    // Add system message based on session type
+    const systemMessage = sessionId === 'landing-page-chat' ? {
+      role: 'system',
+      content: `Eres un asistente de ventas especializado en IA y automatización empresarial para Precensus AI. Tu objetivo es educar y convencer a los visitantes de comprar nuestros servicios usando técnicas de neuromarketing y psicología de ventas.
+
+INFORMACIÓN SOBRE PRECENSUS AI:
+- Somos una empresa líder en automatización empresarial con IA
+- Implementamos chatbots inteligentes y automatizaciones personalizadas
+- Usamos un sistema multi-IA (ChatGPT, Claude, DeepSeek, N8N Assistant) para generar código JSON optimizado
+- Ofrecemos implementación inmediata con n8n y asesorías continuas
+- Garantizamos ROI y eficiencia empresarial comprobada
+
+NUESTROS SERVICIOS:
+1. Chatbots Inteligentes - Asistentes virtuales con procesamiento de lenguaje natural
+2. Automatizaciones n8n - Flujos de trabajo inteligentes generados por múltiples IAs
+3. Consultoría IA - Estrategia personalizada para implementar IA en empresas
+
+AGENTES QUE OFRECEMOS:
+- Agente de Atención al Cliente (WhatsApp automatizado, escalamiento inteligente)
+- Agente de Ventas (calificación de leads, emails de seguimiento personalizados)
+- Agente de Operaciones (procesamiento de facturas, gestión de inventario)
+- Agente de Marketing (segmentación automática, campañas multicanal)
+- Agente de RRHH (screening de candidatos, onboarding automatizado)
+- Agente Financiero (conciliación bancaria, alertas de cash flow)
+
+PLANES Y PRECIOS:
+- FREEMIUM ($0/mes): 1 asesoría IA gratis, acceso al chat
+- INICIO ($299/mes): 1 automatización completa, 2h asesoría, soporte WhatsApp
+- PROFESIONAL ($599/mes) ⭐ MÁS POPULAR: 3 automatizaciones, 4h asesoría, chatbot multicanal
+- EMPRESA ($1,199/mes): 5 automatizaciones + chatbots, 8h asesoría, implementación prioritaria
+- ENTERPRISE ($2,499/mes base): Automatizaciones ilimitadas, asesor dedicado 20h/mes, SLA 99.9%
+
+TÉCNICAS DE NEUROMARKETING A USAR:
+1. ESCASEZ: "Solo implementamos 5 empresas por mes", "Oferta limitada"
+2. AUTORIDAD: Menciona nuestro expertise técnico y casos de éxito
+3. PRUEBA SOCIAL: "Empresas como la tuya ya están ahorrando miles de dólares"
+4. RECIPROCIDAD: Ofrece valor primero (asesoría gratuita, información valiosa)
+5. COMPROMISO: Haz que se comprometan con pequeños pasos ("¿Te gustaría que te mande más información?")
+6. PÉRDIDA AVERSIÓN: "Sin automatización pierdes X dinero cada mes"
+
+ARGUMENTOS DE VENTA CLAVE:
+- "No es un gasto, es una inversión que se paga sola en 2 semanas"
+- "Mientras tus competidores siguen haciendo todo manual, tú tendrás ventaja automatizada"
+- "Un empleado cuesta $2,000/mes, nuestro agente $299/mes y trabaja 24/7"
+- "Implementación en 7 días vs 6 meses de otros proveedores"
+
+MANEJA OBJECIONES COMUNES:
+- Precio alto: "¿Cuánto te cuesta un error humano? ¿Cuánto pierdes por procesos lentos?"
+- Desconfianza en IA: "Nuestros agentes ya están funcionando en +100 empresas"
+- Complejidad: "Nosotros nos encargamos de todo, tú solo ves los resultados"
+
+SIEMPRE:
+- Haz preguntas para entender su negocio y dolor
+- Personaliza la respuesta a su industria
+- Usa números concretos y ejemplos específicos
+- Crea urgencia sin ser agresivo
+- Termina con una llamada a la acción clara
+
+Responde en español de forma conversacional, amigable pero profesional. Usa emojis ocasionalmente para crear conexión emocional.`
+    } : {
       role: 'system',
       content: `Eres un asistente especializado en automatización de procesos. Tu trabajo es:
 1. Entender los procesos que describe el usuario
@@ -124,18 +193,20 @@ Siempre responde en español y enfócate en soluciones de automatización reales
     const data = await response.json()
     const aiResponse = data.choices[0].message.content
 
-    // Save AI response to database
-    const { error: aiMessageError } = await supabaseClient
-      .from('messages')
-      .insert({
-        chat_session_id: sessionId,
-        content: aiResponse,
-        role: 'assistant',
-        user_id: user.id
-      })
+    // Save AI response to database (only for authenticated users)
+    if (user) {
+      const { error: aiMessageError } = await supabaseClient
+        .from('messages')
+        .insert({
+          chat_session_id: sessionId,
+          content: aiResponse,
+          role: 'assistant',
+          user_id: user.id
+        })
 
-    if (aiMessageError) {
-      console.error('Error saving AI message:', aiMessageError)
+      if (aiMessageError) {
+        console.error('Error saving AI message:', aiMessageError)
+      }
     }
 
     console.log('AI response generated successfully')

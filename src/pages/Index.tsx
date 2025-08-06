@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload, Target, TrendingUp, Clock, Shield, Mail, Phone, FileText, Calendar, Database, BarChart3 } from "lucide-react";
 import { JsonUploader } from "@/components/JsonUploader";
+import { MiniChat } from "@/components/MiniChat";
 
 const Index = () => {
   const [showUploader, setShowUploader] = useState(false);
@@ -685,6 +686,9 @@ const Index = () => {
 
       {/* JSON Uploader */}
       {showUploader && <JsonUploader onClose={() => setShowUploader(false)} />}
+      
+      {/* Mini Chat */}
+      <MiniChat />
     </div>
   );
 };
