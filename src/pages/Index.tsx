@@ -19,7 +19,7 @@ const Index = () => {
             <img 
               src={logoImage} 
               alt="Precensus AI Logo" 
-              className="h-12 w-auto"
+              className="h-16 w-auto"
             />
           </div>
           <nav className="hidden md:flex space-x-6">
