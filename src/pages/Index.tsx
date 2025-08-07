@@ -24,10 +24,6 @@ const Index = () => {
             <a href="#about" className="text-muted-foreground hover:text-foreground">Nosotros</a>
           </nav>
           <div className="flex gap-2">
-            <Button onClick={() => setShowUploader(true)} variant="outline" className="gap-2">
-              <Upload className="h-4 w-4" />
-              Subir JSON
-            </Button>
             <Button onClick={() => window.location.href = '/auth'} className="gap-2">
               <MessageSquare className="h-4 w-4" />
               Iniciar Sesión / Chat IA
