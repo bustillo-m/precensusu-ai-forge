@@ -45,6 +45,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          role: string | null
           sender: string
           workflow_error: string | null
           workflow_id: string | null
@@ -56,6 +57,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          role?: string | null
           sender: string
           workflow_error?: string | null
           workflow_id?: string | null
@@ -67,6 +69,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          role?: string | null
           sender?: string
           workflow_error?: string | null
           workflow_id?: string | null

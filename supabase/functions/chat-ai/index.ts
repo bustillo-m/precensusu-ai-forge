@@ -67,8 +67,8 @@ serve(async (req) => {
         .insert({
           chat_session_id: sessionId,
           content: message,
-          role: 'user',
-          user_id: user.id
+          sender: 'user',
+          role: 'user'
         })
 
       if (messageError) {
@@ -207,8 +207,8 @@ Siempre responde en español y enfócate en soluciones de automatización reales
         .insert({
           chat_session_id: sessionId,
           content: aiResponse,
-          role: 'assistant',
-          user_id: user.id
+          sender: 'ai',
+          role: 'assistant'
         })
 
       if (aiMessageError) {
