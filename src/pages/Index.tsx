@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, MessageSquare, Zap, Users, ArrowRight, Bot, Code, Cog, Upload, Target, TrendingUp, Clock, Shield, Mail, Phone, FileText, Calendar, Database, BarChart3 } from "lucide-react";
 import { JsonUploader } from "@/components/JsonUploader";
 import { HeroChat } from "@/components/HeroChat";
-import logoImage from "@/assets/precensus-ai-logo.png";
 
 const Index = () => {
   const [showUploader, setShowUploader] = useState(false);
@@ -15,12 +14,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <img 
-              src={logoImage} 
-              alt="Precensus AI Logo" 
-              className="h-24 w-auto"
-            />
+          <div className="flex items-center">
             <h1 className="text-3xl font-bold">Precensus AI</h1>
           </div>
           <nav className="hidden md:flex space-x-6">
