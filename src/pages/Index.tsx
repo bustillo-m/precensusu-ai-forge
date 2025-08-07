@@ -55,10 +55,6 @@ const Index = () => {
             <Zap className="h-5 w-5" />
             Comenzar Automatización
           </Button>
-          <Button size="lg" variant="outline" onClick={() => setShowUploader(true)} className="gap-2">
-            <Upload className="h-5 w-5" />
-            Subir JSON a n8n
-          </Button>
           <Button size="lg" variant="outline">
             <Users className="h-5 w-5 mr-2" />
             Solicitar Consultoría
