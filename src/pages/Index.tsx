@@ -14,11 +14,11 @@ const Index = () => {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <img 
               src="/lovable-uploads/56f46660-1eaa-44f6-b418-d3f13b8f7187.png" 
               alt="Precensus AI Logo" 
-              className="h-8 w-8"
+              className="h-12 w-12"
             />
             <h1 className="text-2xl font-bold">Precensus AI</h1>
           </div>
