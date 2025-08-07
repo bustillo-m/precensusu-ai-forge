@@ -15,7 +15,11 @@ const Index = () => {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <Bot className="h-8 w-8 text-primary" />
+            <img 
+              src="/lovable-uploads/56f46660-1eaa-44f6-b418-d3f13b8f7187.png" 
+              alt="Precensus AI Logo" 
+              className="h-8 w-8"
+            />
             <h1 className="text-2xl font-bold">Precensus AI</h1>
           </div>
           <nav className="hidden md:flex space-x-6">
