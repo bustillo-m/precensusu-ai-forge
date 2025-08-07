@@ -15,12 +15,13 @@ const Index = () => {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <img 
               src={logoImage} 
               alt="Precensus AI Logo" 
-              className="h-16 w-auto"
+              className="h-24 w-auto"
             />
+            <h1 className="text-3xl font-bold">Precensus AI</h1>
           </div>
           <nav className="hidden md:flex space-x-6">
             <a href="#services" className="text-muted-foreground hover:text-foreground">Servicios</a>
