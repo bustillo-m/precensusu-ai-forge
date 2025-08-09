@@ -3,7 +3,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User as UserIcon, Loader2, CheckCircle, XCircle, Plus } from "lucide-react";
+import { Send, Bot, User as UserIcon, Loader2, CheckCircle, XCircle, Plus, FileJson } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -203,6 +203,27 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
       }
     }
     return null;
+  };
+
+  const downloadWorkflowJson = (workflow: any, filename = 'automatizacion-n8n.json') => {
+    try {
+      const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Error creating JSON download:', e);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudo preparar la descarga del JSON.'
+      });
+    }
   };
 
   const simulateAIResponse = async (userMessage: string, chatId: string) => {
@@ -493,7 +514,26 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
                 <>
                   <div className="whitespace-pre-wrap">{message.content}</div>
                   
-                  {/* Workflow status indicator */}
+                  {message.sender === 'ai' && extractWorkflowFromContent(message.content) && (
+                    <div
+                      className="mt-3 p-3 rounded-lg border bg-background/60 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const wf = extractWorkflowFromContent(message.content);
+                        if (wf) downloadWorkflowJson(wf, 'automatizacion-n8n.json');
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileJson className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">automatizacion-n8n.json</p>
+                          <p className="text-xs text-muted-foreground">
+                            ¿Quieres descargar el documento JSON para importarlo en n8n? Pulsa aquí.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   {message.sender === 'ai' && message.ai_type === 'n8n' && message.workflow_status && (
                     <div className="mt-3 p-3 rounded-lg border">
                       <div className="flex items-center gap-2">
@@ -549,6 +589,20 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
             disabled={isLoading}
             className="flex-1 h-12 rounded-full px-6 text-base"
           />
+          <Button
+            variant="outline"
+            disabled={isLoading}
+            onClick={() => {
+              if (isLoading) return;
+              const prompt = "Genera el documento JSON de la automatización listo para importar en n8n. Devuelve solo JSON válido, sin comentarios.";
+              setInput(prompt);
+              setTimeout(() => handleSend(), 0);
+            }}
+            className="h-12 rounded-full px-4 gap-2"
+          >
+            <FileJson className="h-5 w-5" />
+            Crear documento JSON
+          </Button>
           <Button onClick={handleSend} disabled={isLoading || !input.trim()} size="lg" className="rounded-full h-12 w-12 p-0">
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
