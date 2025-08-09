@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User as UserIcon, Loader2, CheckCircle, XCircle, Plus, FileJson } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 
 interface Message {
   id: string;
@@ -30,6 +33,7 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [hasOfferedJson, setHasOfferedJson] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -48,6 +52,28 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
       setMessages([]);
     }
   }, [currentChatId]);
+
+  // Reset offer flag when chat changes
+  useEffect(() => {
+    setHasOfferedJson(false);
+  }, [currentChatId]);
+
+  // When a new chat has no messages, proactively ask about JSON download
+  useEffect(() => {
+    if (currentChatId && messages.length === 0 && !hasOfferedJson) {
+      const promptMessage: Message = {
+        id: Date.now().toString(),
+        content:
+          "¿Quieres que te descargue el documento JSON para importarlo en n8n y poder utilizar la automatización? Pulsa el botón ‘Crear documento JSON’.",
+        sender: "ai",
+        ai_type: "n8n",
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, promptMessage]);
+      saveMessage(promptMessage);
+      setHasOfferedJson(true);
+    }
+  }, [currentChatId, messages.length, hasOfferedJson]);
 
   const fetchMessages = async () => {
     if (!currentChatId) return;
@@ -193,15 +219,38 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
   };
 
   const extractWorkflowFromContent = (content: string) => {
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-    if (jsonMatch) {
+    // 1) Try fenced code block with explicit json
+    let match = content.match(/```json\s*([\s\S]*?)\s*```/i);
+    if (match) {
       try {
-        return JSON.parse(jsonMatch[1]);
+        return JSON.parse(match[1]);
       } catch (e) {
-        console.error('Error parsing JSON:', e);
-        return null;
+        console.error('Error parsing JSON from ```json``` block:', e);
       }
     }
+
+    // 2) Try any fenced code block
+    match = content.match(/```\s*([\s\S]*?)\s*```/);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch (e) {
+        console.error('Error parsing JSON from generic ``` ``` block:', e);
+      }
+    }
+
+    // 3) Fallback: try to parse the biggest JSON-looking slice
+    const first = content.indexOf('{');
+    const last = content.lastIndexOf('}');
+    if (first !== -1 && last !== -1 && last > first) {
+      const jsonCandidate = content.slice(first, last + 1).trim();
+      try {
+        return JSON.parse(jsonCandidate);
+      } catch (e) {
+        console.error('Error parsing JSON from braces fallback:', e);
+      }
+    }
+
     return null;
   };
 
@@ -512,7 +561,7 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
                 </div>
               ) : (
                 <>
-                  <div className="whitespace-pre-wrap">{message.content}</div>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                   
                   {message.sender === 'ai' && extractWorkflowFromContent(message.content) && (
                     <div
