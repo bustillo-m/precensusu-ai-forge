@@ -56,11 +56,38 @@ export default function Auth() {
         });
 
         if (error) {
-          toast({
-            variant: "destructive",
-            title: "Error de inicio de sesión",
-            description: error.message,
-          });
+          console.error("Login error:", error);
+          const lower = (error.message || "").toLowerCase();
+
+          if (lower.includes("confirm") || lower.includes("not confirmed")) {
+            try {
+              const redirectUrl = `${window.location.origin}/`;
+              await supabase.auth.resend({
+                type: "signup",
+                email,
+                options: { emailRedirectTo: redirectUrl },
+              });
+              toast({
+                title: "Confirma tu correo",
+                description:
+                  "Te reenviamos el email de confirmación. Revisa tu bandeja de entrada y spam.",
+              });
+            } catch (e) {
+              console.error("Resend confirm error:", e);
+            }
+          } else if (lower.includes("invalid login credentials")) {
+            toast({
+              variant: "destructive",
+              title: "Credenciales inválidas",
+              description: "Revisa tu email y contraseña.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Error de inicio de sesión",
+              description: error.message,
+            });
+          }
           return;
         }
 
@@ -102,11 +129,21 @@ export default function Auth() {
         });
 
         if (error) {
-          toast({
-            variant: "destructive",
-            title: "Error de registro",
-            description: error.message,
-          });
+          console.error("Signup error:", error);
+          const lower = (error.message || "").toLowerCase();
+          if (lower.includes("already") && lower.includes("registered")) {
+            toast({
+              title: "Usuario ya registrado",
+              description: "Ya existe una cuenta con ese email. Inicia sesión.",
+            });
+            setIsLogin(true);
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Error de registro",
+              description: error.message,
+            });
+          }
           return;
         }
 
