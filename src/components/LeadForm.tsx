@@ -46,7 +46,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ variant = "full", ctaText = 
       console.error("Lead form error", e);
       toast({
         title: "No se pudo enviar",
-        description: "Configura la API de email o envíanos un correo a precensus@gmail.com",
+        description: "Configura la API de email o envíanos un correo a u1974564828@gmail.com",
         variant: "destructive",
       });
     } finally {

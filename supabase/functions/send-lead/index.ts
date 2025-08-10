@@ -3,7 +3,7 @@ import { Resend } from "npm:resend@2.0.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const TO_EMAIL = Deno.env.get("LEADS_TO_EMAIL") || "precensus@gmail.com";
+const TO_EMAIL = Deno.env.get("LEADS_TO_EMAIL") || "u1974564828@gmail.com";
 
 interface LeadPayload {
   name: string;
