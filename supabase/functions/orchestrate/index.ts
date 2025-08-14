@@ -29,13 +29,47 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Starting orchestration for prompt: ${prompt.substring(0, 100)}...`);
+    // Get authenticated user from JWT token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'No authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    // Create workflow record
+    // Extract user from the authorization token
+    const token = authHeader.replace('Bearer ', '');
+    let authenticatedUserId = user_id;
+    
+    if (!authenticatedUserId) {
+      try {
+        // Parse the JWT token to get the user ID
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        authenticatedUserId = payload.sub;
+      } catch (e) {
+        console.error('Error parsing JWT token:', e);
+        return new Response(JSON.stringify({ error: 'Invalid authorization token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    if (!authenticatedUserId) {
+      return new Response(JSON.stringify({ error: 'User authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Starting orchestration for user ${authenticatedUserId} with prompt: ${prompt.substring(0, 100)}...`);
+
+    // Create workflow record with authenticated user ID
     const { data: workflow, error: workflowError } = await supabase
       .from('workflows')
       .insert({
-        user_id: user_id || '00000000-0000-0000-0000-000000000000',
+        user_id: authenticatedUserId,
         title: `Automation: ${prompt.substring(0, 50)}...`,
         description: prompt,
         workflow_json: {},

@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 interface AutomationFormProps {
   onWorkflowGenerated?: (workflow: any) => void;
@@ -14,9 +15,24 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState<string>('');
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Get current user
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getCurrentUser();
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+
+    if (!user) {
+      setResult({ error: 'Debes estar autenticado para crear automatizaciones' });
+      return;
+    }
 
     setIsGenerating(true);
     setCurrentStep('Iniciando orquestación...');
@@ -25,6 +41,7 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
       const { data, error } = await supabase.functions.invoke('orchestrate', {
         body: { 
           prompt: prompt.trim(),
+          user_id: user.id,
           dry_run: false 
         }
       });
@@ -59,11 +76,17 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
           
           <Button 
             onClick={handleGenerate}
-            disabled={isGenerating || !prompt.trim()}
+            disabled={isGenerating || !prompt.trim() || !user}
             className="w-full"
           >
             {isGenerating ? 'Generando...' : 'Generar Automatización'}
           </Button>
+
+          {!user && (
+            <p className="text-sm text-muted-foreground text-center">
+              Debes estar autenticado para crear automatizaciones
+            </p>
+          )}
 
           {isGenerating && (
             <div className="text-center">
