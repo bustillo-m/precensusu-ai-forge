@@ -3,6 +3,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 import { corsHeaders } from "../_shared/cors.ts";
 
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const n8nWorkflowUrl = Deno.env.get('N8N_WORKFLOW_URL');
+const n8nApiToken = Deno.env.get('N8N_API_TOKEN');
 const n8nAssistantApiKey = Deno.env.get('N8N_ASSISTANT_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -154,6 +157,36 @@ serve(async (req) => {
       } else {
         const data = await response.json();
         workflowJson = data.workflow_json;
+        
+        // If N8N workflow URL is configured, send workflow to N8N
+        if (n8nWorkflowUrl && n8nApiToken && !dry_run) {
+          try {
+            console.log('Sending workflow to N8N instance...');
+            const n8nResponse = await fetch(`${n8nWorkflowUrl}/api/v1/workflows`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${n8nApiToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name: workflowJson.name || 'Generated Workflow',
+                nodes: workflowJson.nodes,
+                connections: workflowJson.connections,
+                active: true
+              }),
+            });
+            
+            if (n8nResponse.ok) {
+              const n8nData = await n8nResponse.json();
+              console.log(`Workflow created in N8N with ID: ${n8nData.id}`);
+              workflowJson.n8n_workflow_id = n8nData.id;
+            } else {
+              console.log('Failed to create workflow in N8N:', await n8nResponse.text());
+            }
+          } catch (error) {
+            console.log('Error sending workflow to N8N:', error);
+          }
+        }
       }
     }
 

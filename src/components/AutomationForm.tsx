@@ -38,6 +38,9 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
     setCurrentStep('Iniciando orquestación...');
     
     try {
+      // Check if essential credentials are configured by testing the orchestrate function
+      setCurrentStep('Verificando credenciales...');
+      
       const { data, error } = await supabase.functions.invoke('orchestrate', {
         body: { 
           prompt: prompt.trim(),
@@ -46,7 +49,30 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's a credentials error
+        if (error.message?.includes('API key') || error.message?.includes('credential')) {
+          setCurrentStep('Solicitando credenciales por email...');
+          
+          // Send email request for missing credentials
+          await supabase.functions.invoke('request-credentials', {
+            body: {
+              service: 'Sistema de Automatización',
+              api_key_name: 'MULTIPLE_APIS',
+              message: `Faltan credenciales para completar la automatización: "${prompt.substring(0, 100)}..."`
+            }
+          });
+          
+          setResult({ 
+            error: 'Faltan credenciales de API. Se ha enviado un correo solicitando la configuración necesaria.',
+            credentials_requested: true
+          });
+          setCurrentStep('Credenciales solicitadas por email');
+          return;
+        }
+        
+        throw error;
+      }
 
       setResult(data);
       onWorkflowGenerated?.(data);
@@ -115,8 +141,17 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
                 </details>
               </div>
             ) : (
-              <div className="text-destructive">
-                <p>Error: {result.error}</p>
+              <div className="space-y-2">
+                <div className="text-destructive">
+                  <p>Error: {result.error}</p>
+                </div>
+                {result.credentials_requested && (
+                  <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      📧 Se ha enviado una solicitud de credenciales a u1974564828@gmail.com
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

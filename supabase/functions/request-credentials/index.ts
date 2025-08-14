@@ -1,150 +1,115 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-import { corsHeaders } from "../_shared/cors.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0'
+import { corsHeaders } from "../_shared/cors.ts"
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const TO_EMAIL = Deno.env.get("LEADS_TO_EMAIL") || "u1974564828@gmail.com";
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const leadsToEmail = Deno.env.get('LEADS_TO_EMAIL')!
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
 interface CredentialRequest {
-  service: string;
-  api_key_name: string;
-  workflow_id: string;
-  step: string;
-  user_email?: string;
+  service: string
+  api_key_name: string
+  workflow_id?: string
+  step?: string
+  message?: string
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
 
   try {
-    const { service, api_key_name, workflow_id, step, user_email }: CredentialRequest = await req.json();
+    const { service, api_key_name, workflow_id, step, message }: CredentialRequest = await req.json()
 
-    if (!Deno.env.get("RESEND_API_KEY")) {
-      console.error("Missing RESEND_API_KEY");
-      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+    // Check if the API key already exists
+    const keyExists = Deno.env.get(api_key_name)
+    
+    if (keyExists) {
+      console.log(`API key ${api_key_name} is already configured`)
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'API key is already configured' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const emailSubject = `🔑 Credenciales faltantes para ${service}`
+    const emailBody = `
+    <h2>Faltan credenciales para completar la operación</h2>
+    
+    <p><strong>Servicio:</strong> ${service}</p>
+    <p><strong>Variable requerida:</strong> ${api_key_name}</p>
+    ${workflow_id ? `<p><strong>Workflow ID:</strong> ${workflow_id}</p>` : ''}
+    ${step ? `<p><strong>Paso:</strong> ${step}</p>` : ''}
+    
+    <p><strong>Mensaje:</strong> ${message || 'Se requiere configurar la API key para continuar con la automatización.'}</p>
+    
+    <hr>
+    
+    <h3>Instrucciones:</h3>
+    <ol>
+      <li>Ve a la configuración de Supabase Edge Functions</li>
+      <li>Agrega la variable de entorno: <code>${api_key_name}</code></li>
+      <li>Reinicia las funciones edge para aplicar los cambios</li>
+    </ol>
+    
+    <p><a href="https://supabase.com/dashboard/project/${supabaseUrl.split('.')[0].split('//')[1]}/settings/functions">Configurar credenciales en Supabase</a></p>
+    
+    <br>
+    <p><em>Este mensaje se generó automáticamente desde el sistema de automatización.</em></p>
+    `
+
+    // Send email using the send-lead function
+    const { error: emailError } = await supabase.functions.invoke('send-lead', {
+      body: {
+        to: leadsToEmail,
+        subject: emailSubject,
+        html: emailBody,
+        metadata: {
+          type: 'credential_request',
+          service,
+          api_key_name,
+          workflow_id,
+          step
+        }
+      }
+    })
+
+    if (emailError) {
+      console.error('Failed to send credential request email:', emailError)
+      return new Response(JSON.stringify({ 
+        error: 'Failed to send credential request email',
+        details: emailError 
+      }), {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    const timestamp = new Date().toISOString();
-    const requestId = `cred_req_${Date.now()}`;
+    console.log(`Credential request sent for ${service} (${api_key_name})`)
 
-    // Email to admin requesting credentials
-    await resend.emails.send({
-      from: "Precensusu AI <no-reply@resend.dev>",
-      to: [TO_EMAIL],
-      subject: `🔑 Credencial requerida: ${service}`,
-      html: `
-        <h2>Solicitud de Credencial API</h2>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <p><strong>Servicio:</strong> ${service}</p>
-          <p><strong>Variable requerida:</strong> ${api_key_name}</p>
-          <p><strong>Workflow ID:</strong> ${workflow_id}</p>
-          <p><strong>Paso del pipeline:</strong> ${step}</p>
-          <p><strong>Timestamp:</strong> ${timestamp}</p>
-          <p><strong>Request ID:</strong> ${requestId}</p>
-        </div>
-        
-        <h3>Instrucciones para configurar:</h3>
-        <ol>
-          <li>Ve a <a href="https://supabase.com/dashboard/project/bopunplxayuvcvrmsjhq/settings/functions">Supabase Edge Functions Secrets</a></li>
-          <li>Añade una nueva variable con nombre: <code>${api_key_name}</code></li>
-          <li>Introduce la clave API de ${service}</li>
-          <li>Reinicia las funciones edge para aplicar los cambios</li>
-        </ol>
-        
-        <h3>Detalles del servicio:</h3>
-        ${getServiceInstructions(service)}
-        
-        <p><em>Una vez configurado, el pipeline podrá continuar automáticamente.</em></p>
-      `,
-    });
-
-    // Optional: Email to user if provided
-    if (user_email) {
-      await resend.emails.send({
-        from: "Precensusu AI <no-reply@resend.dev>",
-        to: [user_email],
-        subject: "⏳ Tu automatización está en espera",
-        html: `
-          <h2>Automatización en proceso</h2>
-          <p>Hola,</p>
-          <p>Tu solicitud de automatización está siendo procesada, pero necesitamos configurar algunas credenciales de API para completar el proceso.</p>
-          
-          <div style="background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 15px 0;">
-            <p><strong>Workflow ID:</strong> ${workflow_id}</p>
-            <p><strong>Estado:</strong> Esperando configuración de ${service}</p>
-          </div>
-          
-          <p>Nos pondremos en contacto contigo una vez que el workflow esté listo.</p>
-          
-          <p>— Equipo Precensusu AI</p>
-        `,
-      });
-    }
-
-    console.log(`Credential request sent for ${service} (${api_key_name})`);
-
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: true,
-      request_id: requestId,
+      message: `Credential request sent for ${service}. Email notification dispatched.`,
       service,
-      api_key_name,
-      message: "Credential request sent to administrator"
+      api_key_name
     }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
 
-  } catch (e) {
-    console.error("request-credentials error", e);
-    return new Response(JSON.stringify({ error: String(e) }), {
+  } catch (error) {
+    console.error('Error in request-credentials function:', error)
+    
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      details: error.message
+    }), {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
-});
-
-function getServiceInstructions(service: string): string {
-  switch (service) {
-    case 'OpenAI':
-      return `
-        <p><strong>OpenAI API Key:</strong></p>
-        <ul>
-          <li>Ve a <a href="https://platform.openai.com/api-keys">OpenAI API Keys</a></li>
-          <li>Crea una nueva clave API</li>
-          <li>Asegúrate de tener créditos disponibles en tu cuenta</li>
-        </ul>
-      `;
-    case 'Anthropic':
-      return `
-        <p><strong>Anthropic API Key:</strong></p>
-        <ul>
-          <li>Ve a <a href="https://console.anthropic.com/settings/keys">Anthropic Console</a></li>
-          <li>Genera una nueva clave API</li>
-          <li>Verifica que tienes acceso a Claude Sonnet 4</li>
-        </ul>
-      `;
-    case 'DeepSeek':
-      return `
-        <p><strong>DeepSeek API Key:</strong></p>
-        <ul>
-          <li>Ve a <a href="https://platform.deepseek.com/api_keys">DeepSeek Platform</a></li>
-          <li>Crea una nueva clave API</li>
-          <li>Confirma que tienes acceso al modelo deepseek-chat</li>
-        </ul>
-      `;
-    case 'N8n Assistant':
-      return `
-        <p><strong>N8n Assistant API Key:</strong></p>
-        <ul>
-          <li>Este es un servicio personalizado para generar workflows de n8n</li>
-          <li>Contacta al administrador para obtener acceso</li>
-          <li>El sistema puede funcionar sin esta clave usando generación básica</li>
-        </ul>
-      `;
-    default:
-      return `<p>Consulta la documentación del servicio <strong>${service}</strong> para obtener instrucciones específicas.</p>`;
-  }
-}
+})
