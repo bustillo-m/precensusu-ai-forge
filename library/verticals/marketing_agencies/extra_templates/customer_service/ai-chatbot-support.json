@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "templateCreatedBy": "CustomerServiceAI",
+    "templateDescription": "AI-powered customer support chatbot with knowledge base integration",
+    "templateId": "1007",
+    "templateName": "AI Chatbot Support",
+    "templateVersion": "1.0.0"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat-support",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": "{{ $credentials.googleSheetsOAuth2Api.knowledgeBaseId }}",
+        "sheetName": "FAQ",
+        "options": {}
+      },
+      "id": "load-knowledge-base",
+      "name": "Load Knowledge Base",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.openaiApi.apiKey }}"
+            }
+          ]
+        },
+        "jsonParameters": true,
+        "bodyParametersJson": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful customer support agent. Use the knowledge base to answer questions accurately and professionally. Knowledge base: {{ $node['Load Knowledge Base'].json.map(row => `Q: ${row.question} A: ${row.answer}`).join(' | ') }}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Customer question: {{ $json.message }}\\n\\nCustomer info: {{ $json.customer_email || 'unknown' }}\"\n    }\n  ],\n  \"max_tokens\": 500,\n  \"temperature\": 0.3\n}"
+      },
+      "id": "ai-response",
+      "name": "AI Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.choices[0].message.content.toLowerCase() }}",
+              "rightValue": "contact support",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "escalation-check",
+      "name": "Escalation Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "ticket",
+        "subject": "Customer Support - {{ $node['Chat Webhook'].json.customer_email || 'Unknown Customer' }}",
+        "body": {
+          "bodyHtml": "Customer Question: {{ $node['Chat Webhook'].json.message }}\\n\\nAI Response: {{ $node['AI Response'].json.choices[0].message.content }}\\n\\nCustomer Email: {{ $node['Chat Webhook'].json.customer_email || 'Not provided' }}"
+        },
+        "additionalFields": {
+          "priority": "normal",
+          "status": "new",
+          "tags": ["ai-escalation", "support"]
+        }
+      },
+      "id": "create-ticket",
+      "name": "Create Ticket",
+      "type": "n8n-nodes-base.freshdesk",
+      "typeVersion": 1,
+      "position": [1500, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "response",
+              "value": "={{ $node['AI Response'].json.choices[0].message.content }}"
+            },
+            {
+              "name": "escalated",
+              "value": "false"
+            },
+            {
+              "name": "confidence",
+              "value": "high"
+            }
+          ]
+        }
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1500, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1800, 300]
+    }
+  ],
+  "connections": {
+    "Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Load Knowledge Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Knowledge Base": {
+      "main": [
+        [
+          {
+            "node": "AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Response": {
+      "main": [
+        [
+          {
+            "node": "Escalation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Check": {
+      "main": [
+        [
+          {
+            "node": "Create Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ticket": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "tags": ["customer-service", "ai", "chatbot", "support", "automation"],
+  "triggerCount": 0,
+  "updatedAt": "2024-08-14T00:00:00.000Z",
+  "versionId": "1"
+}

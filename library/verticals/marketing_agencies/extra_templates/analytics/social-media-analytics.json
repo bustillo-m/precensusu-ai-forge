@@ -1,0 +1,217 @@
+{
+  "meta": {
+    "templateCreatedBy": "AnalyticsPro",
+    "templateDescription": "Automated social media analytics reporting and insights",
+    "templateId": "1005",
+    "templateName": "Social Media Analytics",
+    "templateVersion": "1.0.0"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "interval": 24,
+        "unit": "hours"
+      },
+      "id": "daily-trigger",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://graph.facebook.com/v18.0/{{ $credentials.facebookPagesApi.pageId }}/insights",
+        "authentication": "oAuth2",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "metric",
+              "value": "page_impressions,page_reach,page_engaged_users,post_impressions"
+            },
+            {
+              "name": "period",
+              "value": "day"
+            },
+            {
+              "name": "since",
+              "value": "={{ new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0] }}"
+            }
+          ]
+        }
+      },
+      "id": "facebook-insights",
+      "name": "Facebook Insights",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [600, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.instagram.com/v1/users/self/media/recent",
+        "authentication": "oAuth2",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "count",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "id": "instagram-stats",
+      "name": "Instagram Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [600, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.openaiApi.apiKey }}"
+            }
+          ]
+        },
+        "jsonParameters": true,
+        "bodyParametersJson": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a social media analytics expert. Analyze the provided data and generate insights and recommendations.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze this social media data and provide insights:\\n\\nFacebook: {{ $node['Facebook Insights'].json }}\\n\\nInstagram: {{ $node['Instagram Stats'].json }}\\n\\nGenerate a summary with key metrics, trends, and actionable recommendations.\"\n    }\n  ],\n  \"max_tokens\": 1000,\n  \"temperature\": 0.3\n}"
+      },
+      "id": "generate-insights",
+      "name": "Generate Insights",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": "{{ $credentials.googleSheetsOAuth2Api.analyticsSpreadsheetId }}",
+        "sheetName": "Daily_Reports",
+        "fieldsToSend": "defineBelow",
+        "fieldsToSendOptions": {
+          "fields": [
+            {
+              "fieldName": "date",
+              "fieldValue": "={{ new Date().toISOString().split('T')[0] }}"
+            },
+            {
+              "fieldName": "facebook_reach",
+              "fieldValue": "={{ $node['Facebook Insights'].json.data[0]?.values[0]?.value || 0 }}"
+            },
+            {
+              "fieldName": "facebook_impressions",
+              "fieldValue": "={{ $node['Facebook Insights'].json.data[1]?.values[0]?.value || 0 }}"
+            },
+            {
+              "fieldName": "instagram_posts",
+              "fieldValue": "={{ $node['Instagram Stats'].json.data?.length || 0 }}"
+            },
+            {
+              "fieldName": "ai_insights",
+              "fieldValue": "={{ $json.choices[0].message.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-analytics",
+      "name": "Save Analytics",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "analytics@yourcompany.com",
+        "toEmail": "team@yourcompany.com",
+        "subject": "Daily Social Media Analytics Report - {{ new Date().toISOString().split('T')[0] }}",
+        "emailType": "html",
+        "message": "<h2>Daily Social Media Report</h2>\\n<h3>Key Metrics:</h3>\\n<ul>\\n<li>Facebook Reach: {{ $node['Facebook Insights'].json.data[0]?.values[0]?.value || 0 }}</li>\\n<li>Facebook Impressions: {{ $node['Facebook Insights'].json.data[1]?.values[0]?.value || 0 }}</li>\\n<li>Instagram Posts: {{ $node['Instagram Stats'].json.data?.length || 0 }}</li>\\n</ul>\\n\\n<h3>AI Insights:</h3>\\n<p>{{ $node['Generate Insights'].json.choices[0].message.content.replace('\\n', '<br>') }}</p>",
+        "options": {}
+      },
+      "id": "email-report",
+      "name": "Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Facebook Insights",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Insights": {
+      "main": [
+        [
+          {
+            "node": "Generate Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Stats": {
+      "main": [
+        [
+          {
+            "node": "Generate Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Insights": {
+      "main": [
+        [
+          {
+            "node": "Save Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Analytics": {
+      "main": [
+        [
+          {
+            "node": "Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["analytics", "social-media", "reporting", "ai", "insights"],
+  "triggerCount": 0,
+  "updatedAt": "2024-08-14T00:00:00.000Z",
+  "versionId": "1"
+}

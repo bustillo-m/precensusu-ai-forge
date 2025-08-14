@@ -1,0 +1,213 @@
+{
+  "meta": {
+    "templateCreatedBy": "FinanceAutomation",
+    "templateDescription": "Automated expense tracking and categorization with OCR",
+    "templateId": "1004",
+    "templateName": "Expense Tracking Automation",
+    "templateVersion": "1.0.0"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "path": "expense-upload",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [300, 300],
+      "webhookId": "expense-upload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vision.googleapis.com/v1/images:annotate",
+        "authentication": "serviceAccount",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\n  \"requests\": [\n    {\n      \"image\": {\n        \"content\": \"{{ $json.image_base64 }}\"\n      },\n      \"features\": [\n        {\n          \"type\": \"TEXT_DETECTION\",\n          \"maxResults\": 1\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "id": "ocr-extract",
+      "name": "OCR Extract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.openaiApi.apiKey }}"
+            }
+          ]
+        },
+        "jsonParameters": true,
+        "bodyParametersJson": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a financial assistant. Extract and categorize expense information from receipt text. Return JSON with: {amount, vendor, date, category, description}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Extract expense details from this receipt text: {{ $json.responses[0].textAnnotations[0].description }}\"\n    }\n  ],\n  \"max_tokens\": 300,\n  \"temperature\": 0.1\n}"
+      },
+      "id": "categorize-expense",
+      "name": "Categorize Expense",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": "{{ $credentials.googleSheetsOAuth2Api.expenseSpreadsheetId }}",
+        "sheetName": "Expenses",
+        "columnToMatchOn": "receipt_id",
+        "valueToMatchOn": "={{ $node.Webhook.json.receipt_id }}",
+        "fieldsToUpdate": {
+          "fields": [
+            {
+              "column": "amount",
+              "value": "={{ JSON.parse($json.choices[0].message.content).amount }}"
+            },
+            {
+              "column": "vendor",
+              "value": "={{ JSON.parse($json.choices[0].message.content).vendor }}"
+            },
+            {
+              "column": "date",
+              "value": "={{ JSON.parse($json.choices[0].message.content).date }}"
+            },
+            {
+              "column": "category",
+              "value": "={{ JSON.parse($json.choices[0].message.content).category }}"
+            },
+            {
+              "column": "description",
+              "value": "={{ JSON.parse($json.choices[0].message.content).description }}"
+            },
+            {
+              "column": "processed_date",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-to-sheet",
+      "name": "Save to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ parseFloat(JSON.parse($node['Categorize Expense'].json.choices[0].message.content).amount) }}",
+              "rightValue": 100,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-amount",
+      "name": "Check Amount",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "finance@yourcompany.com",
+        "toEmail": "manager@yourcompany.com",
+        "subject": "High Expense Alert: ${{ JSON.parse($node['Categorize Expense'].json.choices[0].message.content).amount }}",
+        "emailType": "text",
+        "message": "A high expense has been recorded:\\n\\nAmount: ${{ JSON.parse($node['Categorize Expense'].json.choices[0].message.content).amount }}\\nVendor: {{ JSON.parse($node['Categorize Expense'].json.choices[0].message.content).vendor }}\\nCategory: {{ JSON.parse($node['Categorize Expense'].json.choices[0].message.content).category }}\\nDate: {{ JSON.parse($node['Categorize Expense'].json.choices[0].message.content).date }}\\n\\nPlease review for approval.",
+        "options": {}
+      },
+      "id": "alert-email",
+      "name": "Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1800, 200]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "OCR Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR Extract": {
+      "main": [
+        [
+          {
+            "node": "Categorize Expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize Expense": {
+      "main": [
+        [
+          {
+            "node": "Save to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Check Amount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Amount": {
+      "main": [
+        [
+          {
+            "node": "Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["finance", "expense", "ocr", "automation", "tracking"],
+  "triggerCount": 0,
+  "updatedAt": "2024-08-14T00:00:00.000Z",
+  "versionId": "1"
+}

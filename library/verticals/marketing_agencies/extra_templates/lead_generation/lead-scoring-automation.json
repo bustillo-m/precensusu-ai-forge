@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "templateCreatedBy": "LeadGenPro",
+    "templateDescription": "Automated lead scoring with AI analysis and CRM integration",
+    "templateId": "1006",
+    "templateName": "Lead Scoring Automation",
+    "templateVersion": "1.0.0"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.openaiApi.apiKey }}"
+            }
+          ]
+        },
+        "jsonParameters": true,
+        "bodyParametersJson": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a lead scoring specialist. Analyze lead data and provide a score from 0-100 with explanation. Consider: company size, industry, budget, timeline, engagement level.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Score this lead: Company: {{ $json.company }}, Industry: {{ $json.industry }}, Budget: {{ $json.budget }}, Timeline: {{ $json.timeline }}, Email domain: {{ $json.email.split('@')[1] }}, Job title: {{ $json.job_title }}\"\n    }\n  ],\n  \"max_tokens\": 400,\n  \"temperature\": 0.2\n}"
+      },
+      "id": "ai-lead-scoring",
+      "name": "AI Lead Scoring",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ parseInt($node['AI Lead Scoring'].json.choices[0].message.content.match(/\\d+/)[0]) }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "high-score-filter",
+      "name": "High Score Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "contact",
+        "email": "={{ $node['Lead Webhook'].json.email }}",
+        "additionalFields": {
+          "company": "={{ $node['Lead Webhook'].json.company }}",
+          "firstname": "={{ $node['Lead Webhook'].json.first_name }}",
+          "lastname": "={{ $node['Lead Webhook'].json.last_name }}",
+          "jobtitle": "={{ $node['Lead Webhook'].json.job_title }}",
+          "lifecyclestage": "lead",
+          "lead_score": "={{ parseInt($node['AI Lead Scoring'].json.choices[0].message.content.match(/\\d+/)[0]) }}"
+        }
+      },
+      "id": "hubspot-create",
+      "name": "HubSpot Create",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [1200, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sales@yourcompany.com",
+        "toEmail": "sales-team@yourcompany.com",
+        "subject": "🔥 High-Quality Lead Alert: {{ $node['Lead Webhook'].json.company }}",
+        "emailType": "html",
+        "message": "<h2>High-Quality Lead Alert!</h2>\\n<p><strong>Score:</strong> {{ parseInt($node['AI Lead Scoring'].json.choices[0].message.content.match(/\\d+/)[0]) }}/100</p>\\n<p><strong>Company:</strong> {{ $node['Lead Webhook'].json.company }}</p>\\n<p><strong>Contact:</strong> {{ $node['Lead Webhook'].json.first_name }} {{ $node['Lead Webhook'].json.last_name }}</p>\\n<p><strong>Email:</strong> {{ $node['Lead Webhook'].json.email }}</p>\\n<p><strong>Title:</strong> {{ $node['Lead Webhook'].json.job_title }}</p>\\n<p><strong>Budget:</strong> {{ $node['Lead Webhook'].json.budget }}</p>\\n<p><strong>AI Analysis:</strong> {{ $node['AI Lead Scoring'].json.choices[0].message.content }}</p>",
+        "options": {}
+      },
+      "id": "sales-alert",
+      "name": "Sales Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "processed"
+            },
+            {
+              "name": "score",
+              "value": "={{ parseInt($node['AI Lead Scoring'].json.choices[0].message.content.match(/\\d+/)[0]) }}"
+            },
+            {
+              "name": "priority",
+              "value": "={{ parseInt($node['AI Lead Scoring'].json.choices[0].message.content.match(/\\d+/)[0]) >= 70 ? 'high' : 'medium' }}"
+            }
+          ]
+        }
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Scoring": {
+      "main": [
+        [
+          {
+            "node": "High Score Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Score Filter": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Create",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sales Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Create": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Alert": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "tags": ["lead-generation", "scoring", "ai", "crm", "sales"],
+  "triggerCount": 0,
+  "updatedAt": "2024-08-14T00:00:00.000Z",
+  "versionId": "1"
+}
