@@ -1,0 +1,108 @@
+marketing_agencies:
+  videos:
+    keywords:
+      - "reel"
+      - "reels"
+      - "instagram reel"
+      - "video corto"
+      - "short video"
+      - "video marketing"
+      - "video automatico"
+      - "generar video"
+      - "crear video"
+      - "video viral"
+      - "video sin rostro"
+      - "faceless video"
+      - "video automatizado"
+    templates:
+      - name: "generador_reels-2.json"
+        description: "Genera reels automáticos para Instagram"
+        keywords: ["reel", "instagram", "automatico"]
+      - name: "Famous_Brands_Shorts_Template.json"
+        description: "Plantilla para shorts de marcas famosas"
+        keywords: ["shorts", "brands", "famous", "marcas"]
+      - name: "Faceless_Video.json"
+        description: "Videos sin rostro automatizados"
+        keywords: ["faceless", "sin rostro", "video anonimo"]
+
+  blogs:
+    keywords:
+      - "blog"
+      - "artículo"
+      - "articulo"
+      - "post blog"
+      - "contenido blog"
+      - "redaccion"
+      - "escribir blog"
+      - "seo blog"
+      - "blog seo"
+      - "contenido seo"
+    templates:
+      - name: "Blog_Post.json"
+        description: "Generador automático de posts de blog"
+        keywords: ["blog", "post", "articulo"]
+      - name: "Agente_creador_de_Blog_SEO_Expert.json"
+        description: "Agente especializado en blogs optimizados para SEO"
+        keywords: ["blog", "seo", "expert", "optimizado"]
+
+  images:
+    keywords:
+      - "imagen"
+      - "foto"
+      - "crear imagen"
+      - "generar imagen"
+      - "editar imagen"
+      - "diseño"
+      - "avatar"
+      - "logo"
+      - "marca personal"
+      - "branding"
+    templates:
+      - name: "Create_Image.json"
+        description: "Creador automático de imágenes"
+        keywords: ["crear", "generar", "imagen"]
+      - name: "Edit_Image.json"
+        description: "Editor automático de imágenes"
+        keywords: ["editar", "modificar", "imagen"]
+      - name: "Agente_Avatar_Marca_Personal.json"
+        description: "Generador de avatares para marca personal"
+        keywords: ["avatar", "marca personal", "branding"]
+
+  linkedin:
+    keywords:
+      - "linkedin"
+      - "post linkedin"
+      - "publicacion linkedin"
+      - "contenido linkedin"
+      - "networking"
+      - "profesional"
+    templates:
+      - name: "LinkedIn_Post.json"
+        description: "Generador de posts optimizados para LinkedIn"
+        keywords: ["linkedin", "post", "profesional"]
+
+  agents:
+    keywords:
+      - "agente"
+      - "equipo ia"
+      - "ai team"
+      - "marketing team"
+      - "agente marketing"
+      - "automatizacion marketing"
+      - "equipo automatico"
+    templates:
+      - name: "AI_Marketing_Team.json"
+        description: "Equipo completo de IA para marketing"
+        keywords: ["ai team", "marketing team", "equipo ia"]
+
+# Intent matching rules
+intent_matching:
+  exact_match_weight: 10
+  partial_match_weight: 5
+  category_match_weight: 3
+  fuzzy_match_threshold: 0.7
+  
+# Default fallback when no intent matches
+fallback:
+  message: "No encontré una plantilla específica para tu solicitud. Puedes describir más detalles sobre la automatización que necesitas."
+  suggested_categories: ["videos", "blogs", "images", "linkedin", "agents"]

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -121,6 +121,123 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          keywords: string[] | null
+          name: string
+          subcategory: string | null
+          template_json: Json
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          name: string
+          subcategory?: string | null
+          template_json: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          name?: string
+          subcategory?: string | null
+          template_json?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      workflow_executions: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          status: string
+          step_name: string
+          step_number: number
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          status?: string
+          step_name: string
+          step_number: number
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          status?: string
+          step_name?: string
+          step_number?: number
+          workflow_id?: string
+        }
+        Relationships: []
+      }
+      workflows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          template_used: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          validation_errors: Json | null
+          workflow_json: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          template_used?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          validation_errors?: Json | null
+          workflow_json: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          template_used?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          validation_errors?: Json | null
+          workflow_json?: Json
         }
         Relationships: []
       }

@@ -1,0 +1,76 @@
+{
+  "id": "logger-node-template",
+  "name": "Workflow Logger",
+  "type": "@n8n/n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [840, 240],
+  "parameters": {
+    "method": "POST",
+    "url": "={{ $vars.LOGGING_WEBHOOK_URL || 'https://your-logging-service.com/api/logs' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+      "parameters": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    "sendBody": true,
+    "bodyParameters": {
+      "parameters": [
+        {
+          "name": "workflow_id",
+          "value": "={{ $workflow.id }}"
+        },
+        {
+          "name": "workflow_name",
+          "value": "={{ $workflow.name }}"
+        },
+        {
+          "name": "execution_id",
+          "value": "={{ $execution.id }}"
+        },
+        {
+          "name": "node_name",
+          "value": "={{ $node.name }}"
+        },
+        {
+          "name": "timestamp",
+          "value": "={{ $now.toISO() }}"
+        },
+        {
+          "name": "data",
+          "value": "={{ JSON.stringify($input.all()) }}"
+        },
+        {
+          "name": "status",
+          "value": "success"
+        }
+      ]
+    },
+    "options": {
+      "timeout": 10000,
+      "retry": {
+        "enabled": true,
+        "maxRetries": 3,
+        "retryInterval": 1000
+      }
+    }
+  },
+  "credentials": {
+    "httpHeaderAuth": {
+      "id": "logging-service-auth",
+      "name": "Logging Service Auth"
+    }
+  },
+  "continueOnFail": true,
+  "alwaysOutputData": true,
+  "executeOnce": false,
+  "retryOnFail": false,
+  "maxTries": 1,
+  "waitBetweenTries": 1000,
+  "notes": "Logs workflow execution data for monitoring and debugging purposes"
+}
