@@ -1,0 +1,288 @@
+{
+  "name": "Faceless Video Creator",
+  "nodes": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Webhook Trigger",
+      "type": "@n8n/n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 200],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "faceless-video",
+        "options": {}
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Generate Topic & Script",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization", 
+              "value": "Bearer YOUR_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "Eres un experto en crear videos sin rostro (faceless) virales. Crea scripts informativos y engaging para videos de 60-90 segundos."
+                },
+                {
+                  "role": "user",
+                  "content": "Tema: {{ $json.body.topic || 'curiosidades increíbles' }}. Crea un script para video faceless que sea viral y educativo."
+                }
+              ]
+            },
+            {
+              "name": "max_tokens",
+              "value": 1000
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Generate Voiceover",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/{{ $vars.VOICE_ID }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "YOUR_ELEVENLABS_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $node['Generate Topic & Script'].json.choices[0].message.content }}"
+            },
+            {
+              "name": "model_id",
+              "value": "eleven_multilingual_v2"
+            },
+            {
+              "name": "voice_settings",
+              "value": {
+                "stability": 0.7,
+                "similarity_boost": 0.8,
+                "style": 0.3
+              }
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "responseFormat": "file"
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "name": "Create Background Video",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pexels.com/videos/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "YOUR_PEXELS_API_KEY"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "{{ $json.body.visual_theme || 'abstract background' }}"
+            },
+            {
+              "name": "orientation",
+              "value": "portrait"
+            },
+            {
+              "name": "size",
+              "value": "medium"
+            },
+            {
+              "name": "per_page",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "name": "Process Video with FFmpeg",
+      "type": "@n8n/n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst { exec } = require('child_process');\nconst util = require('util');\nconst execPromise = util.promisify(exec);\n\n// Get audio and video data\nconst audioBuffer = $input.all()[0].binary.data;\nconst videoUrl = $input.all()[1].json.videos[0].video_files[0].link;\n\n// Create temp files\nconst audioPath = '/tmp/audio.mp3';\nconst videoPath = '/tmp/background.mp4';\nconst outputPath = '/tmp/final_video.mp4';\n\n// Save audio file\nfs.writeFileSync(audioPath, audioBuffer);\n\n// Download background video\nconst videoResponse = await fetch(videoUrl);\nconst videoBuffer = await videoResponse.arrayBuffer();\nfs.writeFileSync(videoPath, Buffer.from(videoBuffer));\n\n// Combine audio and video with subtitle styling\nconst ffmpegCommand = `ffmpeg -i ${videoPath} -i ${audioPath} -filter_complex \"[0:v]scale=1080:1920,setsar=1[v];[v]drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='{{ $node['Generate Topic & Script'].json.choices[0].message.content }}':fontcolor=white:fontsize=48:box=1:boxcolor=black@0.7:boxborderw=5:x=(w-text_w)/2:y=h-200[vout]\" -map \"[vout]\" -map 1:a -c:v libx264 -c:a aac -shortest ${outputPath}`;\n\ntry {\n  await execPromise(ffmpegCommand);\n  const finalVideo = fs.readFileSync(outputPath);\n  \n  return [{\n    json: {\n      success: true,\n      video_path: outputPath,\n      message: 'Video created successfully'\n    },\n    binary: {\n      data: finalVideo,\n      mimeType: 'video/mp4',\n      fileName: 'faceless_video.mp4'\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      success: false,\n      error: error.message\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000006",
+      "name": "Upload to Storage",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $vars.SUPABASE_URL }}/storage/v1/object/faceless-videos/{{ $now.toFormat('yyyy-MM-dd') }}/video_{{ $now.toMillis() }}.mp4",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "video/mp4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBodyType": "raw",
+        "rawBody": "={{ $binary.data }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Topic & Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Topic & Script": {
+      "main": [
+        [
+          {
+            "node": "Generate Voiceover",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Background Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Voiceover": {
+      "main": [
+        [
+          {
+            "node": "Process Video with FFmpeg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Background Video": {
+      "main": [
+        [
+          {
+            "node": "Process Video with FFmpeg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Video with FFmpeg": {
+      "main": [
+        [
+          {
+            "node": "Upload to Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "id": "tag1",
+      "name": "Faceless",
+      "createdAt": "2024-01-01",
+      "updatedAt": "2024-01-01"
+    },
+    {
+      "id": "tag2",
+      "name": "Video",
+      "createdAt": "2024-01-01",
+      "updatedAt": "2024-01-01"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "00000000-0000-0000-0000-000000000000"
+}

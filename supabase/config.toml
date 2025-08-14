@@ -1,1 +1,34 @@
 project_id = "bopunplxayuvcvrmsjhq"
+
+[functions.orchestrate]
+verify_jwt = false
+
+[functions.chatgpt-planner]
+verify_jwt = false
+
+[functions.claude-refiner]
+verify_jwt = false
+
+[functions.deepseek-optimizer]
+verify_jwt = false
+
+[functions.n8n-assistant]
+verify_jwt = false
+
+[functions.validate-workflow]
+verify_jwt = false
+
+[functions.dry-run]
+verify_jwt = false
+
+[functions.request-credentials]
+verify_jwt = false
+
+[functions.send-lead]
+verify_jwt = false
+
+[functions.chat-ai]
+verify_jwt = false
+
+[functions.send-to-n8n]
+verify_jwt = false

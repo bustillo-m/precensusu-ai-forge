@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Clock, Code, Upload, Shield, Mail, Calendar, Database, FileText } from "lucide-react";
 import { LeadForm } from "@/components/LeadForm";
+import { AutomationForm } from "@/components/AutomationForm";
 
 export default function Index() {
   useEffect(() => {
@@ -194,6 +195,17 @@ export default function Index() {
                 </CardHeader>
               </Card>
             </div>
+          </div>
+        </section>
+
+        {/* Automation Form */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">Crea tu Automatización</h2>
+              <p className="text-muted-foreground">Describe lo que quieres automatizar y generamos el workflow de n8n para ti</p>
+            </div>
+            <AutomationForm />
           </div>
         </section>
 

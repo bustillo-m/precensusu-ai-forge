@@ -1,0 +1,454 @@
+{
+  "name": "AI Marketing Team Orchestrator",
+  "nodes": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Campaign Trigger",
+      "type": "@n8n/n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 200],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-marketing-team",
+        "options": {}
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Marketing Strategist",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "Eres el CMO de una agencia de marketing digital. Tu especialidad es crear estrategias de marketing integral multicanal que maximizan ROI y engagement."
+                },
+                {
+                  "role": "user",
+                  "content": "Proyecto: {{ $json.body.project_name }}. Objetivo: {{ $json.body.objective }}. Presupuesto: {{ $json.body.budget }}. Audiencia: {{ $json.body.target_audience }}. Crea una estrategia de marketing completa con canales, timing, KPIs y distribución de presupuesto."
+                }
+              ]
+            },
+            {
+              "name": "max_tokens",
+              "value": 2000
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Content Creator",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-sonnet-20240229"
+            },
+            {
+              "name": "max_tokens",
+              "value": 3000
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "user",
+                  "content": "Eres el Content Manager del equipo. Basándote en esta estrategia: {{ $node['Marketing Strategist'].json.choices[0].message.content }}, crea un plan de contenido detallado para 30 días incluyendo: posts para redes sociales, blogs, videos, emails y assets visuales. Especifica copy, timing y distribución."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "name": "Performance Analyst",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "Eres el Data Analyst del equipo de marketing. Tu especialidad es crear sistemas de medición, KPIs, dashboards y reportes de performance."
+                },
+                {
+                  "role": "user",
+                  "content": "Estrategia base: {{ $node['Marketing Strategist'].json.choices[0].message.content }}. Diseña un sistema completo de analytics y tracking: KPIs por canal, métricas de attribution, setup de Google Analytics/Facebook Pixel, reportes automatizados y optimization recommendations."
+                }
+              ]
+            },
+            {
+              "name": "max_tokens",
+              "value": 1500
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "name": "Paid Media Specialist",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "Eres el Paid Media Manager. Experto en Google Ads, Facebook Ads, LinkedIn Ads y programmatic advertising. Optimizas campañas para maximizar ROAS."
+                },
+                {
+                  "role": "user",
+                  "content": "Estrategia: {{ $node['Marketing Strategist'].json.choices[0].message.content }}. Plan de contenido: {{ $node['Content Creator'].json.content[0].text }}. Crea campañas de paid media específicas: estructura de cuentas, targeting, presupuestos, ad copy, creative brief y optimization strategy."
+                }
+              ]
+            },
+            {
+              "name": "max_tokens",
+              "value": 2000
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000006",
+      "name": "SEO Expert",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-sonnet-20240229"
+            },
+            {
+              "name": "max_tokens",
+              "value": 2000
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "user",
+                  "content": "Eres el SEO Lead del equipo. Plan de contenido disponible: {{ $node['Content Creator'].json.content[0].text }}. Crea una estrategia SEO completa: keyword research, content optimization, technical SEO checklist, link building strategy y content calendar optimizado para search."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000007",
+      "name": "Team Coordinator",
+      "type": "@n8n/n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Consolidar todos los outputs del equipo de marketing\nconst strategy = $node['Marketing Strategist'].json.choices[0].message.content;\nconst contentPlan = $node['Content Creator'].json.content[0].text;\nconst analytics = $node['Performance Analyst'].json.choices[0].message.content;\nconst paidMedia = $node['Paid Media Specialist'].json.choices[0].message.content;\nconst seoStrategy = $node['SEO Expert'].json.content[0].text;\n\n// Crear plan maestro coordinado\nconst masterPlan = {\n  project_id: `marketing_${Date.now()}`,\n  campaign_name: $input.first().json.body.project_name,\n  created_at: new Date().toISOString(),\n  \n  // Outputs por especialista\n  team_deliverables: {\n    marketing_strategy: {\n      specialist: 'Marketing Strategist (GPT-4)',\n      output: strategy,\n      priority: 'high',\n      implementation_timeline: '1-2 weeks'\n    },\n    content_plan: {\n      specialist: 'Content Creator (Claude)',\n      output: contentPlan,\n      priority: 'high',\n      implementation_timeline: '2-4 weeks'\n    },\n    analytics_setup: {\n      specialist: 'Performance Analyst (GPT-4)',\n      output: analytics,\n      priority: 'medium',\n      implementation_timeline: '1 week'\n    },\n    paid_media_campaigns: {\n      specialist: 'Paid Media Specialist (GPT-4)',\n      output: paidMedia,\n      priority: 'high',\n      implementation_timeline: '1-3 weeks'\n    },\n    seo_optimization: {\n      specialist: 'SEO Expert (Claude)',\n      output: seoStrategy,\n      priority: 'medium',\n      implementation_timeline: '2-8 weeks'\n    }\n  },\n  \n  // Coordinación y next steps\n  coordination: {\n    immediate_actions: [\n      'Setup analytics tracking',\n      'Begin content creation',\n      'Launch paid media campaigns',\n      'Implement technical SEO'\n    ],\n    weekly_reviews: 'Performance analysis and optimization',\n    monthly_reports: 'Comprehensive ROI and growth analysis',\n    team_communication: 'Daily standups and weekly strategy reviews'\n  },\n  \n  // Métricas de éxito\n  success_metrics: {\n    primary_kpis: ['ROAS', 'Lead Generation', 'Brand Awareness'],\n    secondary_kpis: ['Engagement Rate', 'Organic Traffic', 'Conversion Rate'],\n    reporting_frequency: 'Weekly dashboards, Monthly deep-dives'\n  }\n};\n\nreturn [{\n  json: {\n    success: true,\n    master_plan: masterPlan,\n    team_coordination_complete: true,\n    ready_for_execution: true\n  }\n}];"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000008",
+      "name": "Save Campaign Plan",
+      "type": "@n8n/n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $vars.SUPABASE_URL }}/rest/v1/marketing_campaigns",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "apikey",
+              "value": "{{ $vars.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "project_id",
+              "value": "={{ $json.master_plan.project_id }}"
+            },
+            {
+              "name": "campaign_name",
+              "value": "={{ $json.master_plan.campaign_name }}"
+            },
+            {
+              "name": "master_plan",
+              "value": "={{ JSON.stringify($json.master_plan) }}"
+            },
+            {
+              "name": "team_size",
+              "value": 5
+            },
+            {
+              "name": "ai_specialists",
+              "value": "Marketing Strategist, Content Creator, Performance Analyst, Paid Media Specialist, SEO Expert"
+            },
+            {
+              "name": "status",
+              "value": "ready_for_execution"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Campaign Trigger": {
+      "main": [
+        [
+          {
+            "node": "Marketing Strategist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing Strategist": {
+      "main": [
+        [
+          {
+            "node": "Content Creator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Performance Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Creator": {
+      "main": [
+        [
+          {
+            "node": "Paid Media Specialist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SEO Expert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Performance Analyst": {
+      "main": [
+        [
+          {
+            "node": "Team Coordinator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paid Media Specialist": {
+      "main": [
+        [
+          {
+            "node": "Team Coordinator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Expert": {
+      "main": [
+        [
+          {
+            "node": "Team Coordinator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Team Coordinator": {
+      "main": [
+        [
+          {
+            "node": "Save Campaign Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "id": "tag1",
+      "name": "Marketing",
+      "createdAt": "2024-01-01",
+      "updatedAt": "2024-01-01"
+    },
+    {
+      "id": "tag2",
+      "name": "Team",
+      "createdAt": "2024-01-01",
+      "updatedAt": "2024-01-01"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "00000000-0000-0000-0000-000000000000"
+}
