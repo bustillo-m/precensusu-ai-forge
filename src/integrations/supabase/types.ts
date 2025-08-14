@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      automations: {
+        Row: {
+          created_at: string
+          id: string
+          prompt: string
+          status: string | null
+          title: string | null
+          user_id: string | null
+          workflow_json: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prompt: string
+          status?: string | null
+          title?: string | null
+          user_id?: string | null
+          workflow_json: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prompt?: string
+          status?: string | null
+          title?: string | null
+          user_id?: string | null
+          workflow_json?: Json
+        }
+        Relationships: []
+      }
       chat_sessions: {
         Row: {
           created_at: string

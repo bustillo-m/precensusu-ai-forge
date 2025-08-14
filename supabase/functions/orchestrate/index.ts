@@ -168,6 +168,17 @@ serve(async (req) => {
       });
     }
 
+    // Save to automations table
+    await supabase
+      .from('automations')
+      .insert({
+        user_id: authenticatedUserId,
+        prompt: prompt,
+        workflow_json: finalWorkflow,
+        title: `Automation: ${prompt.substring(0, 50)}...`,
+        status: dry_run ? 'dry_run_complete' : 'completed'
+      });
+
     // Update workflow with final result
     await supabase
       .from('workflows')
