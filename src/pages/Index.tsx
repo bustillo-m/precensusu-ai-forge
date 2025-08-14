@@ -106,45 +106,17 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Cómo funciona + video */}
+        {/* Cómo funciona */}
         <section id="como-funciona" className="py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-10">Cómo funciona</h2>
-            <div className="grid lg:grid-cols-2 gap-10 items-start">
-              <div className="space-y-6">
-                <div className="flex items-start gap-3">
-                  <span className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center font-semibold">1</span>
-                  <div>
-                    <h3 className="font-semibold">Pides la automatización</h3>
-                    <p className="text-sm text-muted-foreground">Nos cuentas tu caso y objetivos.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center font-semibold">2</span>
-                  <div>
-                    <h3 className="font-semibold">La IA la diseña</h3>
-                    <p className="text-sm text-muted-foreground">Generamos el flujo base en minutos.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center font-semibold">3</span>
-                  <div>
-                    <h3 className="font-semibold">La optimizamos</h3>
-                    <p className="text-sm text-muted-foreground">Ajustamos condiciones y validamos el JSON.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center font-semibold">4</span>
-                  <div>
-                    <h3 className="font-semibold">Te entregamos el JSON</h3>
-                    <p className="text-sm text-muted-foreground">Listo para importar en n8n y usar.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-card border rounded-lg overflow-hidden">
-                <video src="/videos/demo.mp4" controls poster="/placeholder.svg" className="w-full h-full"></video>
-              </div>
+            <div className="flex justify-center">
+              <img 
+                src="/lovable-uploads/d243776c-df5d-4936-a5c1-619630332a84.png" 
+                alt="Proceso de automatización: 1. Pides la automatización, 2. La IA la diseña, 3. La optimizamos, 4. Importamos la automatización"
+                className="max-w-full h-auto rounded-lg shadow-lg"
+                loading="lazy"
+              />
             </div>
           </div>
         </section>
