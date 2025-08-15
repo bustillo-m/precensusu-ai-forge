@@ -1,94 +1,82 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 import { corsHeaders } from "../_shared/cors.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const n8nWorkflowUrl = Deno.env.get('N8N_WORKFLOW_URL');
-const n8nApiToken = Deno.env.get('N8N_API_TOKEN');
-const n8nAssistantApiKey = Deno.env.get('N8N_ASSISTANT_API_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const n8nApiKey = Deno.env.get('N8N_ASSISTANT_API_KEY');
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const FINALIZER_PROMPT = `You are the N8n Assistant Finalizer. Your role is to transform the optimized workflow specification into a complete, valid n8n workflow JSON that can be directly imported into n8n.
 
-async function loadPromptTemplate(): Promise<string> {
-  try {
-    const response = await fetch(`${supabaseUrl}/storage/v1/object/public/templates/prompts/finalizer.txt`);
-    if (response.ok) {
-      return await response.text();
+INSTRUCTIONS:
+1. Convert the optimized specification into valid n8n JSON format
+2. Generate proper UUIDs for all nodes
+3. Create correct node connections and data flow
+4. Add required logging and error handling nodes
+5. Validate against n8n workflow schema
+6. Ensure all credentials and configurations are properly formatted
+
+INPUT: Optimized workflow specification from DeepSeek
+OUTPUT: Complete n8n workflow JSON ready for import
+
+REQUIRED COMPONENTS:
+1. **Mandatory Nodes**:
+   - Start trigger node
+   - Error handler node
+   - Logger node for tracking
+   - End nodes for all paths
+
+2. **Node Structure**:
+   - Valid UUIDs for all node IDs
+   - Proper positioning for UI layout
+   - Correct parameter formatting
+   - Appropriate type versions
+
+3. **Connections**:
+   - Valid connection mapping
+   - Error path connections
+   - Success path connections
+   - Proper output routing
+
+4. **Validation Requirements**:
+   - Schema compliance
+   - Node parameter validation
+   - Connection integrity
+   - Credential reference validation
+
+TEMPLATE STRUCTURE:
+{
+  "name": "Workflow Name",
+  "nodes": [
+    {
+      "id": "uuid-string",
+      "name": "Node Name",
+      "type": "n8n-node-type",
+      "typeVersion": 1,
+      "position": [x, y],
+      "parameters": {},
+      "credentials": {}
     }
-  } catch (error) {
-    console.log('Could not load custom prompt template, using default');
-  }
-  
-  return `You are the N8n Assistant Finalizer. Transform the optimized specification into a complete, valid n8n workflow JSON.
-
-Optimized Specification: {{OPTIMIZED_SPEC}}
-
-Generate a complete n8n workflow JSON with: proper UUIDs, correct node connections, required logging and error handling nodes, valid schema compliance.
-
-Output only the final n8n workflow JSON that can be directly imported.`;
+  ],
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "timestamp",
+  "versionId": "uuid"
 }
 
-async function loadSnippets() {
-  try {
-    const [loggingResponse, errorHandlerResponse] = await Promise.all([
-      fetch(`${supabaseUrl}/storage/v1/object/public/templates/snippets/logging.json`),
-      fetch(`${supabaseUrl}/storage/v1/object/public/templates/snippets/error_handler.json`)
-    ]);
+QUALITY ASSURANCE:
+- All nodes must have valid types and parameters
+- Connections must reference existing node IDs
+- Credentials must follow n8n naming conventions
+- Error handling must be comprehensive
+- Logging must capture key workflow events
+- Schema validation must pass completely
 
-    const logging = loggingResponse.ok ? await loggingResponse.json() : null;
-    const errorHandler = errorHandlerResponse.ok ? await errorHandlerResponse.json() : null;
-
-    return { logging, errorHandler };
-  } catch (error) {
-    console.log('Could not load snippets, will use basic templates');
-    return { logging: null, errorHandler: null };
-  }
-}
-
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
-function createBasicN8nWorkflow(specification: any): any {
-  const workflowId = generateUUID();
-  
-  return {
-    "name": specification.workflow_specification?.name || "Generated Workflow",
-    "nodes": [
-      {
-        "id": generateUUID(),
-        "name": "Start",
-        "type": "@n8n/n8n-nodes-base.manualTrigger",
-        "typeVersion": 1,
-        "position": [240, 300],
-        "parameters": {}
-      }
-    ],
-    "connections": {},
-    "active": false,
-    "settings": {
-      "executionOrder": "v1"
-    },
-    "staticData": {},
-    "tags": [],
-    "triggerCount": 0,
-    "updatedAt": new Date().toISOString(),
-    "versionId": workflowId
-  };
-}
-
-interface AssistantRequest {
-  optimized_spec: any;
-  workflow_id: string;
-  dry_run?: boolean;
-}
+OUTPUT: Complete n8n workflow JSON that imports without errors and executes successfully.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -96,149 +84,97 @@ serve(async (req) => {
   }
 
   try {
-    const { optimized_spec, workflow_id, dry_run = false }: AssistantRequest = await req.json();
+    if (!n8nApiKey) {
+      throw new Error('N8N_ASSISTANT_API_KEY not configured');
+    }
 
-    // Log execution start
-    await supabase.from('workflow_executions').insert({
-      workflow_id,
-      step_number: 4,
-      step_name: 'n8n_assistant',
-      input_data: { optimized_spec, dry_run },
-      status: 'running'
-    });
-
-    const startTime = Date.now();
-
-    // Load snippets for enhanced workflow
-    const snippets = await loadSnippets();
-
-    let workflowJson;
-
-    if (!n8nAssistantApiKey) {
-      // Send request for API credentials
-      await supabase.functions.invoke('request-credentials', {
-        body: {
-          service: 'N8n Assistant',
-          api_key_name: 'N8N_ASSISTANT_API_KEY',
-          workflow_id,
-          step: 'finalizer'
-        }
+    const { optimized_specification } = await req.json();
+    
+    if (!optimized_specification) {
+      return new Response(JSON.stringify({ error: 'Optimized specification is required for finalization' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
 
-      console.log('N8n Assistant API key not configured, generating basic workflow');
-      
-      // Generate basic workflow as fallback
-      workflowJson = createBasicN8nWorkflow(optimized_spec);
-      
-    } else {
-      const promptTemplate = await loadPromptTemplate();
-      const systemPrompt = promptTemplate.replace('{{OPTIMIZED_SPEC}}', JSON.stringify(optimized_spec, null, 2));
+    console.log('N8N Assistant: Finalizing workflow for specification:', optimized_specification.workflow_specification?.name || 'Unknown');
 
-      console.log(`Generating final n8n workflow for ${workflow_id}`);
-
-      const response = await fetch('https://api.n8n-assistant.com/v1/generate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${n8nAssistantApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          specification: optimized_spec,
-          system_prompt: systemPrompt,
-          include_logging: true,
-          include_error_handling: true,
-          dry_run
-        }),
-      });
-
-      if (!response.ok) {
-        console.log('N8n Assistant API failed, falling back to basic generation');
-        workflowJson = createBasicN8nWorkflow(optimized_spec);
-      } else {
-        const data = await response.json();
-        workflowJson = data.workflow_json;
-        
-        // If N8N workflow URL is configured, send workflow to N8N
-        if (n8nWorkflowUrl && n8nApiToken && !dry_run) {
-          try {
-            console.log('Sending workflow to N8N instance...');
-            const n8nResponse = await fetch(`${n8nWorkflowUrl}/api/v1/workflows`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${n8nApiToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                name: workflowJson.name || 'Generated Workflow',
-                nodes: workflowJson.nodes,
-                connections: workflowJson.connections,
-                active: true
-              }),
-            });
-            
-            if (n8nResponse.ok) {
-              const n8nData = await n8nResponse.json();
-              console.log(`Workflow created in N8N with ID: ${n8nData.id}`);
-              workflowJson.n8n_workflow_id = n8nData.id;
-            } else {
-              console.log('Failed to create workflow in N8N:', await n8nResponse.text());
-            }
-          } catch (error) {
-            console.log('Error sending workflow to N8N:', error);
+    // Use OpenAI with n8n-specific prompt for better n8n workflow generation
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${n8nApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { 
+            role: 'system', 
+            content: FINALIZER_PROMPT 
+          },
+          { 
+            role: 'user', 
+            content: `Please create a complete n8n workflow JSON from this optimized specification:\n\n${JSON.stringify(optimized_specification, null, 2)}` 
           }
-        }
-      }
-    }
-
-    // Enhance workflow with logging and error handling if snippets available
-    if (snippets.logging && snippets.errorHandler) {
-      workflowJson.nodes.push(
-        { ...snippets.logging, id: generateUUID(), position: [workflowJson.nodes.length * 200, 400] },
-        { ...snippets.errorHandler, id: generateUUID(), position: [workflowJson.nodes.length * 200, 600] }
-      );
-    }
-
-    const executionTime = Date.now() - startTime;
-
-    // Log execution completion
-    await supabase.from('workflow_executions').insert({
-      workflow_id,
-      step_number: 4,
-      step_name: 'n8n_assistant',
-      input_data: { optimized_spec, dry_run },
-      output_data: { workflow_json: workflowJson },
-      status: 'completed',
-      execution_time_ms: executionTime
+        ],
+        max_tokens: 3000,
+        temperature: 0.1,
+      }),
     });
 
-    console.log(`N8n Assistant completed in ${executionTime}ms`);
+    if (!response.ok) {
+      throw new Error(`N8N Assistant API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    let workflowText = data.choices[0].message.content;
+    
+    // Clean up the response to extract JSON
+    if (workflowText.includes('```json')) {
+      workflowText = workflowText.split('```json')[1].split('```')[0];
+    } else if (workflowText.includes('```')) {
+      workflowText = workflowText.split('```')[1];
+    }
+    
+    let finalWorkflow;
+    try {
+      finalWorkflow = JSON.parse(workflowText.trim());
+      
+      // Ensure required fields are present
+      if (!finalWorkflow.name) {
+        finalWorkflow.name = optimized_specification.workflow_specification?.name || "Generated Workflow";
+      }
+      
+      if (!finalWorkflow.versionId) {
+        finalWorkflow.versionId = crypto.randomUUID();
+      }
+      
+      if (!finalWorkflow.updatedAt) {
+        finalWorkflow.updatedAt = new Date().toISOString();
+      }
+      
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      console.error('Raw response:', workflowText);
+      throw new Error('Failed to parse final workflow JSON from N8N Assistant response');
+    }
+
+    console.log('N8N Assistant: Workflow finalized successfully');
 
     return new Response(JSON.stringify({
       success: true,
-      workflow_json: workflowJson,
-      execution_time_ms: executionTime,
-      dry_run
+      workflow: finalWorkflow,
+      source: 'n8n-assistant'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('N8n Assistant error:', error);
-
-    // Log execution error
-    if (req.body) {
-      const { workflow_id } = await req.json();
-      await supabase.from('workflow_executions').insert({
-        workflow_id,
-        step_number: 4,
-        step_name: 'n8n_assistant',
-        status: 'failed',
-        error_message: error.message
-      });
-    }
-
+    console.error('N8N Assistant error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error.message,
+      source: 'n8n-assistant'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

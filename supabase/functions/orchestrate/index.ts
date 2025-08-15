@@ -89,143 +89,90 @@ serve(async (req) => {
 
     const workflowId = workflow.id;
 
-    // Create a simple workflow directly instead of calling multiple functions
-    console.log('Creating automated workflow from prompt...');
+    // Multi-AI orchestration workflow
+    console.log('Starting multi-AI orchestration workflow...');
     
-    // Get API keys
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    
-    if (!openaiApiKey) {
-      return new Response(JSON.stringify({ 
-        error: 'OPENAI_API_KEY not configured. Please add your OpenAI API key in Supabase secrets.' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Use OpenAI to create a workflow plan
-    const planResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are an n8n workflow automation expert. Create a detailed n8n workflow JSON from user prompts.
-
-IMPORTANT: Return ONLY valid JSON workflow format. No explanations, no markdown.
-
-Basic n8n workflow structure:
-{
-  "name": "Workflow Name",
-  "nodes": [
-    {
-      "id": "unique-id",
-      "name": "Node Name", 
-      "type": "n8n-node-type",
-      "typeVersion": 1,
-      "position": [x, y],
-      "parameters": {}
-    }
-  ],
-  "connections": {},
-  "active": false,
-  "settings": {},
-  "staticData": {},
-  "tags": [],
-  "triggerCount": 0,
-  "updatedAt": "${new Date().toISOString()}",
-  "versionId": "${crypto.randomUUID()}"
-}`
-          },
-          { 
-            role: 'user', 
-            content: `Create a complete n8n workflow for: ${prompt}` 
-          }
-        ],
-        max_tokens: 2000
-      }),
-    });
-
-    if (!planResponse.ok) {
-      throw new Error(`OpenAI API error: ${planResponse.statusText}`);
-    }
-
-    const planData = await planResponse.json();
-    let workflowJsonText = planData.choices[0].message.content;
-    
-    // Clean up the response to extract JSON
-    if (workflowJsonText.includes('```json')) {
-      workflowJsonText = workflowJsonText.split('```json')[1].split('```')[0];
-    } else if (workflowJsonText.includes('```')) {
-      workflowJsonText = workflowJsonText.split('```')[1].split('```')[0];
-    }
-    
-    let finalWorkflow;
     try {
-      finalWorkflow = JSON.parse(workflowJsonText.trim());
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      console.error('Raw response:', workflowJsonText);
+      // Step 1: ChatGPT Planning
+      console.log('Step 1: Creating initial plan with ChatGPT...');
+      const planResponse = await supabaseAdmin.functions.invoke('chatgpt-planner', {
+        body: { prompt }
+      });
       
-      // Create a simple fallback workflow
-      finalWorkflow = {
-        "name": `Automation: ${prompt.substring(0, 50)}...`,
-        "nodes": [
-          {
-            "id": crypto.randomUUID(),
-            "name": "Manual Trigger",
-            "type": "@n8n/n8n-nodes-base.manualTrigger",
-            "typeVersion": 1,
-            "position": [240, 300],
-            "parameters": {}
-          },
-          {
-            "id": crypto.randomUUID(), 
-            "name": "Set Data",
-            "type": "@n8n/n8n-nodes-base.set",
-            "typeVersion": 3,
-            "position": [460, 300],
-            "parameters": {
-              "assignments": {
-                "assignments": [
-                  {
-                    "id": crypto.randomUUID(),
-                    "name": "automation_prompt",
-                    "value": prompt,
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        ],
-        "connections": {
-          "Manual Trigger": {
-            "main": [
-              [
-                {
-                  "node": "Set Data",
-                  "type": "main",
-                  "index": 0
-                }
-              ]
-            ]
-          }
-        },
-        "active": false,
-        "settings": {},
-        "staticData": {},
-        "tags": [],
-        "triggerCount": 0,
-        "updatedAt": new Date().toISOString(),
-        "versionId": crypto.randomUUID()
-      };
+      if (planResponse.error) {
+        throw new Error(`ChatGPT Planner failed: ${planResponse.error.message}`);
+      }
+      
+      const planData = planResponse.data;
+      console.log('ChatGPT plan created successfully');
+
+      // Step 2: Claude Refinement
+      console.log('Step 2: Refining plan with Claude...');
+      const refineResponse = await supabaseAdmin.functions.invoke('claude-refiner', {
+        body: { plan: planData.plan }
+      });
+      
+      if (refineResponse.error) {
+        throw new Error(`Claude Refiner failed: ${refineResponse.error.message}`);
+      }
+      
+      const refinedData = refineResponse.data;
+      console.log('Claude refinement completed successfully');
+
+      // Step 3: DeepSeek Optimization
+      console.log('Step 3: Optimizing with DeepSeek...');
+      const optimizeResponse = await supabaseAdmin.functions.invoke('deepseek-optimizer', {
+        body: { refined_plan: refinedData.refined_plan }
+      });
+      
+      if (optimizeResponse.error) {
+        throw new Error(`DeepSeek Optimizer failed: ${optimizeResponse.error.message}`);
+      }
+      
+      const optimizedData = optimizeResponse.data;
+      console.log('DeepSeek optimization completed successfully');
+
+      // Step 4: N8N Assistant Finalization
+      console.log('Step 4: Creating final n8n workflow...');
+      const finalizeResponse = await supabaseAdmin.functions.invoke('n8n-assistant', {
+        body: { optimized_specification: optimizedData.optimized_specification }
+      });
+      
+      if (finalizeResponse.error) {
+        throw new Error(`N8N Assistant failed: ${finalizeResponse.error.message}`);
+      }
+      
+      const finalData = finalizeResponse.data;
+      console.log('N8N workflow finalization completed successfully');
+
+      // Step 5: Workflow Validation
+      console.log('Step 5: Validating final workflow...');
+      const validateResponse = await supabaseAdmin.functions.invoke('validate-workflow', {
+        body: { workflow: finalData.workflow }
+      });
+      
+      if (validateResponse.error) {
+        console.warn('Validation failed, but continuing with workflow:', validateResponse.error.message);
+      }
+      
+      const validationData = validateResponse.data;
+      const finalWorkflow = finalData.workflow;
+      
+      console.log('Multi-AI orchestration completed successfully');
+
+    } catch (orchestrationError) {
+      console.error('Multi-AI orchestration failed:', orchestrationError);
+      
+      // Update workflow status to failed
+      await supabaseAdmin
+        .from('workflows')
+        .update({
+          status: 'failed',
+          validation_errors: { orchestration_error: orchestrationError.message }
+        })
+        .eq('id', workflowId);
+      
+      throw orchestrationError;
     }
 
     // Save to automations table

@@ -1,37 +1,91 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 import { corsHeaders } from "../_shared/cors.ts";
 
 const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const OPTIMIZER_PROMPT = `You are a DeepSeek Optimizer for n8n workflows. Your role is to take the refined plan and optimize it for maximum efficiency, scalability, and maintainability.
 
-async function loadPromptTemplate(): Promise<string> {
-  try {
-    const response = await fetch(`${supabaseUrl}/storage/v1/object/public/templates/prompts/optimizer.txt`);
-    if (response.ok) {
-      return await response.text();
+INSTRUCTIONS:
+1. Analyze the refined plan for optimization opportunities
+2. Apply advanced performance optimizations
+3. Implement sophisticated error handling patterns
+4. Optimize for scalability and resource usage
+5. Add comprehensive monitoring and analytics
+6. Prepare for production deployment
+
+INPUT: Refined JSON plan from Claude
+OUTPUT: Highly optimized workflow specification
+
+OPTIMIZATION FOCUS AREAS:
+
+1. **Performance Optimization**:
+   - Parallel execution strategies
+   - Batch processing optimization
+   - Memory and CPU efficiency
+   - Network call optimization
+
+2. **Scalability**:
+   - Queue management
+   - Rate limiting strategies
+   - Load balancing considerations
+   - Resource scaling patterns
+
+3. **Reliability**:
+   - Circuit breaker patterns
+   - Exponential backoff retry
+   - Dead letter queue handling
+   - Health check mechanisms
+
+4. **Monitoring & Analytics**:
+   - Performance metrics collection
+   - Error tracking and alerting
+   - Usage analytics
+   - Cost optimization tracking
+
+5. **Production Readiness**:
+   - Environment configuration
+   - Security hardening
+   - Compliance considerations
+   - Deployment automation
+
+OUTPUT FORMAT:
+{
+  "workflow_specification": {
+    "name": "Optimized workflow name",
+    "description": "Comprehensive workflow description",
+    "category": "Final category",
+    "tags": ["workflow", "tags"],
+    "version": "1.0.0"
+  },
+  "execution_strategy": {
+    "mode": "synchronous|asynchronous|hybrid",
+    "parallelization": "Parallel execution plan",
+    "resource_allocation": "Resource requirements",
+    "scaling_strategy": "How to handle load"
+  },
+  "node_specifications": [
+    {
+      "node_id": "unique_identifier",
+      "name": "Node name",
+      "type": "n8n node type",
+      "position": [x, y],
+      "parameters": "Detailed configuration",
+      "retry_strategy": "Retry configuration",
+      "timeout": "Timeout settings",
+      "monitoring": "Monitoring configuration"
     }
-  } catch (error) {
-    console.log('Could not load custom prompt template, using default');
-  }
-  
-  return `You are a DeepSeek Optimizer for n8n workflows. Take the refined plan and optimize it for maximum efficiency, scalability, and maintainability.
-
-Refined Plan: {{REFINED_PLAN}}
-
-Apply advanced optimizations: performance optimization, scalability, reliability, monitoring & analytics, and production readiness.
-
-Output a highly optimized workflow specification ready for final n8n conversion.`;
-}
-
-interface OptimizerRequest {
-  refined_plan: any;
-  workflow_id: string;
-}
+  ],
+  "connection_map": "Optimized node connections",
+  "error_handling": {
+    "global_error_handler": "Global error handling strategy",
+    "node_specific_handlers": "Per-node error handling",
+    "notification_strategy": "Error notification plan"
+  },
+  "performance_optimizations": ["List of applied optimizations"],
+  "security_measures": ["Security implementations"],
+  "production_checklist": ["Deployment readiness items"]
+}`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -39,39 +93,22 @@ serve(async (req) => {
   }
 
   try {
-    const { refined_plan, workflow_id }: OptimizerRequest = await req.json();
-
-    // Log execution start
-    await supabase.from('workflow_executions').insert({
-      workflow_id,
-      step_number: 3,
-      step_name: 'deepseek_optimizer',
-      input_data: { refined_plan },
-      status: 'running'
-    });
-
-    const startTime = Date.now();
-
     if (!deepseekApiKey) {
-      // Send request for API credentials
-      await supabase.functions.invoke('request-credentials', {
-        body: {
-          service: 'DeepSeek',
-          api_key_name: 'DEEPSEEK_API_KEY',
-          workflow_id,
-          step: 'optimizer'
-        }
-      });
-
-      throw new Error('DeepSeek API key not configured. Credentials request sent.');
+      throw new Error('DEEPSEEK_API_KEY not configured');
     }
 
-    const promptTemplate = await loadPromptTemplate();
-    const systemPrompt = promptTemplate.replace('{{REFINED_PLAN}}', JSON.stringify(refined_plan, null, 2));
+    const { refined_plan } = await req.json();
+    
+    if (!refined_plan) {
+      return new Response(JSON.stringify({ error: 'Refined plan is required for optimization' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    console.log(`Optimizing plan for workflow ${workflow_id}`);
+    console.log('DeepSeek Optimizer: Optimizing plan for objective:', refined_plan.refined_plan?.objective || 'Unknown');
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${deepseekApiKey}`,
@@ -82,85 +119,57 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: systemPrompt
+            content: OPTIMIZER_PROMPT 
           },
           { 
             role: 'user', 
-            content: `Optimize this n8n workflow plan for production: ${JSON.stringify(refined_plan, null, 2)}`
+            content: `Please optimize this refined workflow plan:\n\n${JSON.stringify(refined_plan, null, 2)}` 
           }
         ],
-        max_tokens: 4000,
-        temperature: 0.1
+        max_tokens: 2500,
+        temperature: 0.1,
       }),
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`DeepSeek API error: ${error}`);
+      throw new Error(`DeepSeek API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    let optimizedSpecification;
-
+    const optimizedText = data.choices[0].message.content;
+    
+    let optimizedSpec;
     try {
-      // Try to extract JSON from DeepSeek's response
-      const content = data.choices[0].message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        optimizedSpecification = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No valid JSON found in response');
+      // Clean up JSON if wrapped in markdown
+      let cleanOptimizedText = optimizedText;
+      if (optimizedText.includes('```json')) {
+        cleanOptimizedText = optimizedText.split('```json')[1].split('```')[0];
+      } else if (optimizedText.includes('```')) {
+        cleanOptimizedText = optimizedText.split('```')[1];
       }
+      
+      optimizedSpec = JSON.parse(cleanOptimizedText.trim());
     } catch (parseError) {
-      console.error('JSON parsing error:', parseError);
-      // Fallback: return refined plan with optimization notes
-      optimizedSpecification = {
-        ...refined_plan,
-        optimization_notes: data.choices[0].message.content,
-        optimization_status: 'partial'
-      };
+      console.error('JSON parse error:', parseError);
+      console.error('Raw response:', optimizedText);
+      throw new Error('Failed to parse optimized specification JSON from DeepSeek response');
     }
 
-    const executionTime = Date.now() - startTime;
-
-    // Log execution completion
-    await supabase.from('workflow_executions').insert({
-      workflow_id,
-      step_number: 3,
-      step_name: 'deepseek_optimizer',
-      input_data: { refined_plan },
-      output_data: { optimized_specification: optimizedSpecification },
-      status: 'completed',
-      execution_time_ms: executionTime
-    });
-
-    console.log(`DeepSeek Optimizer completed in ${executionTime}ms`);
+    console.log('DeepSeek Optimizer: Specification optimized successfully');
 
     return new Response(JSON.stringify({
       success: true,
-      optimized_specification: optimizedSpecification,
-      execution_time_ms: executionTime
+      optimized_specification: optimizedSpec,
+      source: 'deepseek-optimizer'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('DeepSeek Optimizer error:', error);
-
-    // Log execution error
-    if (req.body) {
-      const { workflow_id } = await req.json();
-      await supabase.from('workflow_executions').insert({
-        workflow_id,
-        step_number: 3,
-        step_name: 'deepseek_optimizer',
-        status: 'failed',
-        error_message: error.message
-      });
-    }
-
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error.message,
+      source: 'deepseek-optimizer'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
