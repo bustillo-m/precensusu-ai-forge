@@ -50,8 +50,12 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
       });
 
       if (error) {
+        console.error('Detailed error from orchestrate function:', error);
+        
         // Check if it's a credentials error
-        if (error.message?.includes('API key') || error.message?.includes('credential')) {
+        if (error.message?.includes('API key') || error.message?.includes('credential') || 
+            error.message?.includes('OpenAI') || error.message?.includes('Claude') || 
+            error.message?.includes('DeepSeek')) {
           setCurrentStep('Solicitando credenciales por email...');
           
           // Send email request for missing credentials
@@ -59,19 +63,26 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
             body: {
               service: 'Sistema de Automatización',
               api_key_name: 'MULTIPLE_APIS',
-              message: `Faltan credenciales para completar la automatización: "${prompt.substring(0, 100)}..."`
+              message: `Faltan credenciales para completar la automatización: "${prompt.substring(0, 100)}...". Error: ${error.message}`
             }
           });
           
           setResult({ 
             error: 'Faltan credenciales de API. Se ha enviado un correo solicitando la configuración necesaria.',
-            credentials_requested: true
+            credentials_requested: true,
+            technical_error: error.message
           });
           setCurrentStep('Credenciales solicitadas por email');
           return;
         }
         
-        throw error;
+        // For other errors, show more detail
+        setResult({ 
+          error: `Error en el proceso de automatización: ${error.message}`,
+          technical_details: error
+        });
+        setCurrentStep('Error detectado');
+        return;
       }
 
       setResult(data);
