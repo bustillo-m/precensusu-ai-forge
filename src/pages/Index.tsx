@@ -37,7 +37,10 @@ export default function Index() {
             <a href="#precios" className="text-muted-foreground hover:text-foreground">Planes</a>
           </nav>
           <div className="flex gap-2">
-            <Button onClick={() => document.getElementById('hero-form')?.scrollIntoView({ behavior: 'smooth' })} className="gap-2">
+            <Button onClick={() => window.location.href = '/business-chat'} className="gap-2">
+              Consultor IA
+            </Button>
+            <Button variant="outline" onClick={() => document.getElementById('hero-form')?.scrollIntoView({ behavior: 'smooth' })} className="gap-2">
               Solicitar demo
             </Button>
           </div>

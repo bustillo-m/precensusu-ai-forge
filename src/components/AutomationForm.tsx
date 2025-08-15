@@ -111,13 +111,22 @@ export const AutomationForm = ({ onWorkflowGenerated }: AutomationFormProps) => 
             rows={4}
           />
           
-          <Button 
-            onClick={handleGenerate}
-            disabled={isGenerating || !prompt.trim() || !user}
-            className="w-full"
-          >
-            {isGenerating ? 'Generando...' : 'Generar Automatización'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleGenerate}
+              disabled={isGenerating || !prompt.trim() || !user}
+              className="flex-1"
+            >
+              {isGenerating ? 'Generando...' : 'Generar Automatización'}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = '/business-chat'}
+              disabled={isGenerating}
+            >
+              Consultor IA
+            </Button>
+          </div>
 
           {!user && (
             <p className="text-sm text-muted-foreground text-center">
