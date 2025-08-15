@@ -4,9 +4,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 import { corsHeaders } from "../_shared/cors.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use service role key for database operations that bypass RLS when needed
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 interface OrchestrationRequest {
   prompt: string;
@@ -66,7 +67,7 @@ serve(async (req) => {
     console.log(`Starting orchestration for user ${authenticatedUserId} with prompt: ${prompt.substring(0, 100)}...`);
 
     // Create workflow record with authenticated user ID
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error: workflowError } = await supabaseAdmin
       .from('workflows')
       .insert({
         user_id: authenticatedUserId,
@@ -90,7 +91,7 @@ serve(async (req) => {
 
     // Step 1: ChatGPT Planner
     console.log('Step 1: Running ChatGPT Planner');
-    const plannerResponse = await supabase.functions.invoke('chatgpt-planner', {
+    const plannerResponse = await supabaseAdmin.functions.invoke('chatgpt-planner', {
       body: { prompt, workflow_id: workflowId }
     });
 
@@ -102,7 +103,7 @@ serve(async (req) => {
 
     // Step 2: Claude Refiner
     console.log('Step 2: Running Claude Refiner');
-    const refinerResponse = await supabase.functions.invoke('claude-refiner', {
+    const refinerResponse = await supabaseAdmin.functions.invoke('claude-refiner', {
       body: { plan: plannerResult.plan, workflow_id: workflowId }
     });
 
@@ -114,7 +115,7 @@ serve(async (req) => {
 
     // Step 3: DeepSeek Optimizer
     console.log('Step 3: Running DeepSeek Optimizer');
-    const optimizerResponse = await supabase.functions.invoke('deepseek-optimizer', {
+    const optimizerResponse = await supabaseAdmin.functions.invoke('deepseek-optimizer', {
       body: { refined_plan: refinerResult.refined_plan, workflow_id: workflowId }
     });
 
@@ -126,7 +127,7 @@ serve(async (req) => {
 
     // Step 4: N8n Assistant
     console.log('Step 4: Running N8n Assistant');
-    const assistantResponse = await supabase.functions.invoke('n8n-assistant', {
+    const assistantResponse = await supabaseAdmin.functions.invoke('n8n-assistant', {
       body: { 
         optimized_spec: optimizerResult.optimized_specification, 
         workflow_id: workflowId,
@@ -141,7 +142,7 @@ serve(async (req) => {
     const finalWorkflow = assistantResponse.data.workflow_json;
 
     // Validate the final workflow
-    const validationResponse = await supabase.functions.invoke('validate-workflow', {
+    const validationResponse = await supabaseAdmin.functions.invoke('validate-workflow', {
       body: { workflow_json: finalWorkflow, workflow_id: workflowId }
     });
 
@@ -149,7 +150,7 @@ serve(async (req) => {
       console.error('Validation failed:', validationResponse.error);
       
       // Update workflow with validation errors
-      await supabase
+      await supabaseAdmin
         .from('workflows')
         .update({
           status: 'validation_failed',
@@ -169,7 +170,7 @@ serve(async (req) => {
     }
 
     // Save to automations table
-    await supabase
+    await supabaseAdmin
       .from('automations')
       .insert({
         user_id: authenticatedUserId,
@@ -180,7 +181,7 @@ serve(async (req) => {
       });
 
     // Update workflow with final result
-    await supabase
+    await supabaseAdmin
       .from('workflows')
       .update({
         workflow_json: finalWorkflow,
