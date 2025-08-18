@@ -460,9 +460,9 @@ ${agent.implementation}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t p-4">
-        <div className="flex gap-2">
+      {/* Fixed input area at bottom */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t p-4">
+        <div className="flex gap-2 max-w-4xl mx-auto">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

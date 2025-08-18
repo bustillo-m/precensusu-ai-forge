@@ -105,8 +105,8 @@ export const MiniChat = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-2rem)]">
-      <Card className="shadow-2xl border-2">
+    <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] h-[500px]">
+      <Card className="shadow-2xl border-2 h-full flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -133,8 +133,8 @@ export const MiniChat = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className="h-80 overflow-y-auto mb-4 space-y-3 p-2 bg-muted/30 rounded-lg">
+        <CardContent className="p-4 pt-0 flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto space-y-3 p-2 bg-muted/30 rounded-lg">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -177,23 +177,27 @@ export const MiniChat = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Cuéntame sobre tu empresa..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={isLoading || !inputMessage.trim()}
-              size="sm"
-              className="px-3"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+          
+          {/* Fixed input area at bottom */}
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-4 mt-4 border-t">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Cuéntame sobre tu empresa..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={isLoading || !inputMessage.trim()}
+                size="sm"
+                className="px-3"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

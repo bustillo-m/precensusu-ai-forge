@@ -395,23 +395,25 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Describe el proceso que quieres automatizar..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+          {/* Fixed input area at bottom */}
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-4 mt-4 border-t">
+            <div className="flex gap-2 max-w-full mx-auto">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Describe el proceso que quieres automatizar..."
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

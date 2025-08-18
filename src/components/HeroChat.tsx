@@ -88,9 +88,9 @@ export const HeroChat = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-6">
-      <Card className="border border-border/50 shadow-md rounded-3xl overflow-hidden">
-        <CardContent className="p-4">
-          <div className="h-64 overflow-y-auto mb-3 space-y-3 p-3 bg-muted/20 rounded-2xl">
+      <Card className="border border-border/50 shadow-md rounded-3xl overflow-hidden flex flex-col h-96">
+        <CardContent className="p-4 flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-muted/20 rounded-2xl">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -133,23 +133,27 @@ export const HeroChat = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Escribe tu pregunta..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              className="flex-1 rounded-full border-border/50"
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={isLoading || !inputMessage.trim()}
-              size="sm"
-              className="px-3 rounded-full"
-            >
-              <Send className="h-3 w-3" />
-            </Button>
+          
+          {/* Fixed input area at bottom */}
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-3 mt-3 border-t">
+            <div className="flex gap-2 max-w-full mx-auto">
+              <Input
+                placeholder="Escribe tu pregunta..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                className="flex-1 rounded-full border-border/50"
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={isLoading || !inputMessage.trim()}
+                size="sm"
+                className="px-3 rounded-full"
+              >
+                <Send className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
