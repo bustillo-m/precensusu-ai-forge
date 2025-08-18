@@ -160,6 +160,41 @@ serve(async (req) => {
       
       console.log('Multi-AI orchestration completed successfully');
 
+      // Save to automations table
+      await supabaseAdmin
+        .from('automations')
+        .insert({
+          user_id: authenticatedUserId,
+          prompt: prompt,
+          workflow_json: finalWorkflow,
+          title: `Automation: ${prompt.substring(0, 50)}...`,
+          status: dry_run ? 'dry_run_complete' : 'completed'
+        });
+
+      // Update workflow with final result
+      await supabaseAdmin
+        .from('workflows')
+        .update({
+          workflow_json: finalWorkflow,
+          status: dry_run ? 'dry_run_complete' : 'completed'
+        })
+        .eq('id', workflowId);
+
+      console.log(`Orchestration completed successfully for workflow ${workflowId}`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        workflow_id: workflowId,
+        workflow_json: finalWorkflow,
+        execution_summary: {
+          message: "Workflow created successfully using multi-AI orchestration",
+          models_used: ["ChatGPT", "Claude", "DeepSeek", "N8N-Assistant"]
+        },
+        dry_run
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
     } catch (orchestrationError) {
       console.error('Multi-AI orchestration failed:', orchestrationError);
       
@@ -172,43 +207,14 @@ serve(async (req) => {
         })
         .eq('id', workflowId);
       
-      throw orchestrationError;
-    }
-
-    // Save to automations table
-    await supabaseAdmin
-      .from('automations')
-      .insert({
-        user_id: authenticatedUserId,
-        prompt: prompt,
-        workflow_json: finalWorkflow,
-        title: `Automation: ${prompt.substring(0, 50)}...`,
-        status: dry_run ? 'dry_run_complete' : 'completed'
+      return new Response(JSON.stringify({ 
+        error: `Multi-AI orchestration failed: ${orchestrationError.message}`,
+        details: 'Check the function logs for more information'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-
-    // Update workflow with final result
-    await supabaseAdmin
-      .from('workflows')
-      .update({
-        workflow_json: finalWorkflow,
-        status: dry_run ? 'dry_run_complete' : 'completed'
-      })
-      .eq('id', workflowId);
-
-    console.log(`Orchestration completed successfully for workflow ${workflowId}`);
-
-    return new Response(JSON.stringify({
-      success: true,
-      workflow_id: workflowId,
-      workflow_json: finalWorkflow,
-      execution_summary: {
-        message: "Workflow created successfully using OpenAI",
-        model_used: "gpt-4o"
-      },
-      dry_run
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }
 
   } catch (error) {
     console.error('Orchestration error:', error);
