@@ -225,6 +225,77 @@ ${agent.implementation}
     }
   };
 
+  const detectAutomationKeywords = (message: string) => {
+    const keywords = [
+      'crear agente', 'creame', 'automatizacion', 'automatización', 
+      'agente', 'bot', 'crear bot', 'workflow', 'proceso automatico',
+      'automatizar', 'generar agente', 'hacer agente'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return keywords.some(keyword => lowerMessage.includes(keyword));
+  };
+
+  const createAutomation = async () => {
+    if (!newMessage.trim()) return;
+    
+    let sessionId = currentChatId;
+    if (!sessionId) {
+      sessionId = await onCreateChat(`Automatización: ${newMessage.substring(0, 30)}...`);
+      if (!sessionId) return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('orchestrate', {
+        body: {
+          prompt: newMessage,
+          dry_run: false
+        }
+      });
+
+      if (error) throw error;
+
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `🎉 ¡Automatización creada exitosamente!
+
+Workflow ID: ${data.workflow_id}
+
+📊 **Resumen de ejecución:**
+${data.execution_summary.message}
+
+🤖 **Modelos utilizados:** ${data.models_used.join(', ')}
+
+El workflow ha sido guardado y está listo para usar.`,
+        sender: "ai",
+        session_id: sessionId,
+        created_at: new Date().toISOString()
+      };
+
+      const savedBotMessage = await saveMessage(botMessage);
+      if (savedBotMessage) {
+        setMessages(prev => [...prev, savedBotMessage]);
+      }
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error creating automation:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: 'Lo siento, hubo un error al crear la automatización. Por favor, intenta de nuevo.',
+        sender: "ai",
+        session_id: sessionId,
+        created_at: new Date().toISOString()
+      };
+      const savedErrorMessage = await saveMessage(errorMessage);
+      if (savedErrorMessage) {
+        setMessages(prev => [...prev, savedErrorMessage]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
@@ -232,6 +303,24 @@ ${agent.implementation}
     if (!sessionId) {
       sessionId = await onCreateChat(`Consulta: ${newMessage.substring(0, 30)}...`);
       if (!sessionId) return;
+    }
+
+    // Check if user wants to create automation
+    if (detectAutomationKeywords(newMessage)) {
+      const suggestionMessage: Message = {
+        id: (Date.now() + 0.5).toString(),
+        content: '🤖 He detectado que quieres crear una automatización. Te recomiendo usar el botón "Crear Automatización" para un proceso más completo y eficiente.',
+        sender: "ai",
+        session_id: sessionId,
+        created_at: new Date().toISOString()
+      };
+      
+      const savedSuggestion = await saveMessage(suggestionMessage);
+      if (savedSuggestion) {
+        setMessages(prev => [...prev, savedSuggestion]);
+      }
+      setNewMessage('');
+      return;
     }
 
     const userMessage: Message = {
@@ -462,12 +551,23 @@ ${agent.implementation}
 
       {/* Fixed input area at bottom */}
       <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t p-4">
+        <div className="flex gap-2 max-w-4xl mx-auto mb-2">
+          <Button
+            onClick={createAutomation}
+            disabled={loading || !newMessage.trim()}
+            size="sm"
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            🤖 Crear Automatización
+          </Button>
+        </div>
         <div className="flex gap-2 max-w-4xl mx-auto">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Cuéntame sobre tu empresa y procesos..."
+            placeholder="Cuéntame sobre tu empresa y procesos o describe la automatización que necesitas..."
             disabled={loading}
             className="flex-1"
           />

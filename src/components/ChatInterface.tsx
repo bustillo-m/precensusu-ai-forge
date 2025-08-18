@@ -151,6 +151,63 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
     return null;
   };
 
+  const detectAutomationKeywords = (message: string) => {
+    const keywords = [
+      'crear agente', 'creame', 'automatizacion', 'automatización', 
+      'agente', 'bot', 'crear bot', 'workflow', 'proceso automatico',
+      'automatizar', 'generar agente', 'hacer agente'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return keywords.some(keyword => lowerMessage.includes(keyword));
+  };
+
+  const createAutomation = async () => {
+    if (!input.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('orchestrate', {
+        body: {
+          prompt: input,
+          dry_run: false
+        }
+      });
+
+      if (error) throw error;
+
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `🎉 ¡Automatización creada exitosamente!
+
+Workflow ID: ${data.workflow_id}
+
+📊 **Resumen de ejecución:**
+${data.execution_summary.message}
+
+🤖 **Modelos utilizados:** ${data.models_used.join(', ')}
+
+El workflow ha sido guardado y está listo para usar.`,
+        sender: "ai",
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+      setInput('');
+    } catch (error) {
+      console.error('Error creating automation:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: 'Lo siento, hubo un error al crear la automatización. Por favor, intenta de nuevo.',
+        sender: "ai",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const simulateAIResponse = async (userMessage: string) => {
     setIsLoading(true);
 
@@ -263,6 +320,20 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Check if user wants to create automation
+    if (detectAutomationKeywords(input)) {
+      const suggestionMessage: Message = {
+        id: (Date.now() + 0.5).toString(),
+        content: '🤖 He detectado que quieres crear una automatización. Te recomiendo usar el botón "Crear Automatización" para un proceso más completo y eficiente.',
+        sender: "ai",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, suggestionMessage]);
+      setInput('');
+      return;
+    }
+    
     setInput("");
 
     await simulateAIResponse(input);
@@ -397,6 +468,17 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
 
           {/* Fixed input area at bottom */}
           <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-4 mt-4 border-t">
+            <div className="flex gap-2 max-w-full mx-auto mb-2">
+              <Button
+                onClick={createAutomation}
+                disabled={isLoading || !input.trim()}
+                size="sm"
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                🤖 Crear Automatización
+              </Button>
+            </div>
             <div className="flex gap-2 max-w-full mx-auto">
               <Input
                 value={input}

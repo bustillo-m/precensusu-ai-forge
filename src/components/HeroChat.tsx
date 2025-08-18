@@ -33,6 +33,63 @@ export const HeroChat = () => {
     scrollToBottom();
   }, [messages]);
 
+  const detectAutomationKeywords = (message: string) => {
+    const keywords = [
+      'crear agente', 'creame', 'automatizacion', 'automatización', 
+      'agente', 'bot', 'crear bot', 'workflow', 'proceso automatico',
+      'automatizar', 'generar agente', 'hacer agente'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return keywords.some(keyword => lowerMessage.includes(keyword));
+  };
+
+  const createAutomation = async () => {
+    if (!inputMessage.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('orchestrate', {
+        body: {
+          prompt: inputMessage,
+          dry_run: false
+        }
+      });
+
+      if (error) throw error;
+
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `🎉 ¡Automatización creada exitosamente!
+
+Workflow ID: ${data.workflow_id}
+
+📊 **Resumen de ejecución:**
+${data.execution_summary.message}
+
+🤖 **Modelos utilizados:** ${data.models_used.join(', ')}
+
+El workflow ha sido guardado y está listo para usar.`,
+        isBot: true,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+      setInputMessage('');
+    } catch (error) {
+      console.error('Error creating automation:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Lo siento, hubo un error al crear la automatización. Por favor, intenta de nuevo.',
+        isBot: true,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -44,6 +101,20 @@ export const HeroChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Check if user wants to create automation
+    if (detectAutomationKeywords(inputMessage)) {
+      const suggestionMessage: Message = {
+        id: (Date.now() + 0.5).toString(),
+        text: '🤖 He detectado que quieres crear una automatización. Te recomiendo usar el botón "Crear Automatización" para un proceso más completo y eficiente.',
+        isBot: true,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, suggestionMessage]);
+      setInputMessage('');
+      return;
+    }
+    
     setInputMessage('');
     setIsLoading(true);
 
@@ -136,9 +207,20 @@ export const HeroChat = () => {
           
           {/* Fixed input area at bottom */}
           <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-3 mt-3 border-t">
+            <div className="flex gap-2 max-w-full mx-auto mb-2">
+              <Button
+                onClick={createAutomation}
+                disabled={isLoading || !inputMessage.trim()}
+                size="sm"
+                variant="outline"
+                className="px-3 rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                🤖 Crear Automatización
+              </Button>
+            </div>
             <div className="flex gap-2 max-w-full mx-auto">
               <Input
-                placeholder="Escribe tu pregunta..."
+                placeholder="Escribe tu pregunta o describe la automatización que necesitas..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
