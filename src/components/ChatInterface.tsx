@@ -386,7 +386,7 @@ El workflow ha sido guardado y está listo para usar.`,
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+          <div className="flex-1 overflow-y-auto space-y-4 mb-32">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -466,9 +466,9 @@ El workflow ha sido guardado y está listo para usar.`,
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Fixed input area at bottom */}
-          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-4 mt-4 border-t">
-            <div className="flex gap-2 max-w-full mx-auto mb-2">
+          {/* Fixed input area at absolute bottom */}
+          <div className="absolute bottom-0 left-0 right-0 bg-background/98 backdrop-blur-md border-t p-4">
+            <div className="flex gap-2 max-w-full mx-auto mb-3">
               <Button
                 onClick={createAutomation}
                 disabled={isLoading || !input.trim()}

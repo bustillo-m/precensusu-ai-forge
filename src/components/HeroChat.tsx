@@ -158,10 +158,10 @@ El workflow ha sido guardado y está listo para usar.`,
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-6">
-      <Card className="border border-border/50 shadow-md rounded-3xl overflow-hidden flex flex-col h-96">
-        <CardContent className="p-4 flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-muted/20 rounded-2xl">
+    <div className="w-full max-w-2xl mx-auto mt-6 relative">
+      <Card className="border border-border/50 shadow-md rounded-3xl overflow-hidden flex flex-col h-[500px]">
+        <CardContent className="p-4 flex flex-col h-full relative">
+          <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-muted/20 rounded-2xl mb-32">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -205,9 +205,9 @@ El workflow ha sido guardado y está listo para usar.`,
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Fixed input area at bottom */}
-          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-3 mt-3 border-t">
-            <div className="flex gap-2 max-w-full mx-auto mb-2">
+          {/* Fixed input area at absolute bottom */}
+          <div className="absolute bottom-0 left-0 right-0 bg-background/98 backdrop-blur-md border-t p-4 rounded-b-3xl">
+            <div className="flex gap-2 max-w-full mx-auto mb-3">
               <Button
                 onClick={createAutomation}
                 disabled={isLoading || !inputMessage.trim()}

@@ -463,7 +463,7 @@ El workflow ha sido guardado y está listo para usar.`,
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 mb-32 relative">
         {messages.length === 0 && (
           <div className="text-center py-8">
             <Bot className="h-12 w-12 text-primary mx-auto mb-4" />
@@ -549,9 +549,9 @@ El workflow ha sido guardado y está listo para usar.`,
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Fixed input area at bottom */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t p-4">
-        <div className="flex gap-2 max-w-4xl mx-auto mb-2">
+      {/* Fixed input area at absolute bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-background/98 backdrop-blur-md border-t p-4">
+        <div className="flex gap-2 max-w-4xl mx-auto mb-3">
           <Button
             onClick={createAutomation}
             disabled={loading || !newMessage.trim()}
