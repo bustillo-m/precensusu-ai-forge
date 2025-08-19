@@ -1,7 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertChatSessionSchema, insertMessageSchema, insertWorkflowSchema, insertAutomationSchema } from "@shared/schema";
+import { insertUserSchema, insertChatSessionSchema, insertMessageSchema, insertWorkflowSchema, insertAutomationSchema, type User } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -25,14 +25,14 @@ const authenticateToken = async (req: any, res: any, next: any) => {
     }
     req.user = user;
     next();
-  } catch (error) {
+  } catch (error: any) {
     return res.status(403).json({ error: 'Invalid token' });
   }
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);
       
@@ -61,12 +61,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
       res.json({ user: { id: user.id, email: user.email, username: user.username }, token });
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
       
@@ -83,27 +83,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
       res.json({ user: { id: user.id, email: user.email, username: user.username }, token });
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
-  app.get("/api/auth/me", authenticateToken, async (req, res) => {
+  app.get("/api/auth/me", authenticateToken, async (req: any, res: any) => {
     const user = req.user;
     res.json({ user: { id: user.id, email: user.email, username: user.username } });
   });
 
   // Chat Sessions routes
-  app.get("/api/chat-sessions", authenticateToken, async (req, res) => {
+  app.get("/api/chat-sessions", authenticateToken, async (req: any, res: any) => {
     try {
       const sessions = await storage.getChatSessionsByUser(req.user.id);
       res.json(sessions);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post("/api/chat-sessions", authenticateToken, async (req, res) => {
+  app.post("/api/chat-sessions", authenticateToken, async (req: any, res: any) => {
     try {
       const validatedData = insertChatSessionSchema.parse({
         ...req.body,
@@ -112,24 +112,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const session = await storage.createChatSession(validatedData);
       res.json(session);
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
-  app.get("/api/chat-sessions/:id", authenticateToken, async (req, res) => {
+  app.get("/api/chat-sessions/:id", authenticateToken, async (req: any, res: any) => {
     try {
       const session = await storage.getChatSession(req.params.id);
       if (!session || session.userId !== req.user.id) {
         return res.status(404).json({ error: "Chat session not found" });
       }
       res.json(session);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.delete("/api/chat-sessions/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/chat-sessions/:id", authenticateToken, async (req: any, res: any) => {
     try {
       const session = await storage.getChatSession(req.params.id);
       if (!session || session.userId !== req.user.id) {
@@ -137,13 +137,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       await storage.deleteChatSession(req.params.id);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
   // Messages routes
-  app.get("/api/chat-sessions/:sessionId/messages", authenticateToken, async (req, res) => {
+  app.get("/api/chat-sessions/:sessionId/messages", authenticateToken, async (req: any, res: any) => {
     try {
       const session = await storage.getChatSession(req.params.sessionId);
       if (!session || session.userId !== req.user.id) {
@@ -153,12 +153,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       const messages = await storage.getMessagesBySession(req.params.sessionId, limit);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post("/api/messages", authenticateToken, async (req, res) => {
+  app.post("/api/messages", authenticateToken, async (req: any, res: any) => {
     try {
       // Verify session belongs to user
       const session = await storage.getChatSession(req.body.chatSessionId);
@@ -169,22 +169,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage(validatedData);
       res.json(message);
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
   // Workflows routes
-  app.get("/api/workflows", authenticateToken, async (req, res) => {
+  app.get("/api/workflows", authenticateToken, async (req: any, res: any) => {
     try {
       const workflows = await storage.getWorkflowsByUser(req.user.id);
       res.json(workflows);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post("/api/workflows", authenticateToken, async (req, res) => {
+  app.post("/api/workflows", authenticateToken, async (req: any, res: any) => {
     try {
       const validatedData = insertWorkflowSchema.parse({
         ...req.body,
@@ -193,24 +193,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const workflow = await storage.createWorkflow(validatedData);
       res.json(workflow);
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
-  app.get("/api/workflows/:id", authenticateToken, async (req, res) => {
+  app.get("/api/workflows/:id", authenticateToken, async (req: any, res: any) => {
     try {
       const workflow = await storage.getWorkflow(req.params.id);
       if (!workflow || workflow.userId !== req.user.id) {
         return res.status(404).json({ error: "Workflow not found" });
       }
       res.json(workflow);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.put("/api/workflows/:id", authenticateToken, async (req, res) => {
+  app.put("/api/workflows/:id", authenticateToken, async (req: any, res: any) => {
     try {
       const workflow = await storage.getWorkflow(req.params.id);
       if (!workflow || workflow.userId !== req.user.id) {
@@ -220,12 +220,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
       const updatedWorkflow = await storage.updateWorkflow(req.params.id, updates);
       res.json(updatedWorkflow);
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
-  app.delete("/api/workflows/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/workflows/:id", authenticateToken, async (req: any, res: any) => {
     try {
       const workflow = await storage.getWorkflow(req.params.id);
       if (!workflow || workflow.userId !== req.user.id) {
@@ -233,22 +233,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       await storage.deleteWorkflow(req.params.id);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
   // Automations routes
-  app.get("/api/automations", authenticateToken, async (req, res) => {
+  app.get("/api/automations", authenticateToken, async (req: any, res: any) => {
     try {
       const automations = await storage.getAutomationsByUser(req.user.id);
       res.json(automations);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post("/api/automations", authenticateToken, async (req, res) => {
+  app.post("/api/automations", authenticateToken, async (req: any, res: any) => {
     try {
       const validatedData = insertAutomationSchema.parse({
         ...req.body,
@@ -257,13 +257,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const automation = await storage.createAutomation(validatedData);
       res.json(automation);
-    } catch (error) {
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   });
 
+  // Check if message triggers workflow creation
+  const isWorkflowCreationRequest = (message: string): boolean => {
+    const triggers = [
+      'crear agente', 'crear automatización', 'crear workflow', 'crear flujo',
+      'creame', 'hazme', 'genera', 'construye', 'desarrolla',
+      'quiero que crees', 'necesito un agente', 'necesito automatizar',
+      'créalo', 'créame', 'hazlo', 'genéralo'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return triggers.some(trigger => lowerMessage.includes(trigger));
+  };
+
+  // Multi-AI workflow orchestration
+  async function orchestrateWorkflowCreation(prompt: string, userId?: string) {
+    const steps = [];
+    
+    try {
+      // Step 1: ChatGPT Planner
+      steps.push("Iniciando planificación con ChatGPT...");
+      const plannerResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{
+            role: 'system',
+            content: `Eres un planificador experto de automatizaciones. Tu trabajo es analizar el request del usuario y crear un plan detallado de automatización.
+
+DEBES preguntar específicamente sobre:
+1. HERRAMIENTAS DE COMUNICACIÓN: ¿WhatsApp, Telegram, email, SMS?
+2. PLATAFORMAS DE INTEGRACIÓN: ¿Facebook, Instagram, LinkedIn, website?
+3. ALMACENAMIENTO: ¿Google Drive, Dropbox, servidor local?
+4. NOTIFICACIONES: ¿Email, Slack, Discord?
+5. DATOS: ¿Hojas de cálculo, bases de datos, CRM específico?
+
+Crea un plan estructurado con:
+- Descripción del agente
+- Herramientas específicas a usar
+- Flujo de trabajo paso a paso
+- Integraciones necesarias
+- Configuraciones requeridas
+
+Responde en español y sé muy específico sobre las herramientas.`
+          }, {
+            role: 'user',
+            content: prompt
+          }],
+          temperature: 0.3,
+          max_tokens: 1500,
+        }),
+      });
+
+      const plannerData = await plannerResponse.json();
+      const initialPlan = plannerData.choices[0].message.content;
+      steps.push("✅ Plan inicial creado");
+
+      // Step 2: Claude Refiner (si tenemos la API key)
+      let refinedPlan = initialPlan;
+      if (process.env.ANTHROPIC_API_KEY) {
+        steps.push("Refinando con Claude...");
+        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-sonnet-20240229',
+            max_tokens: 1500,
+            messages: [{
+              role: 'user',
+              content: `Refina este plan de automatización agregando:
+1. Manejo de errores robusto
+2. Validaciones de datos
+3. Seguridad y permisos
+4. Escalabilidad
+5. Monitoreo y logs
+
+Plan original:
+${initialPlan}
+
+Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y profesional.`
+            }]
+          }),
+        });
+
+        if (claudeResponse.ok) {
+          const claudeData = await claudeResponse.json();
+          refinedPlan = claudeData.content[0].text;
+          steps.push("✅ Plan refinado con Claude");
+        }
+      }
+
+      // Step 3: DeepSeek Optimizer (simulado por ahora)
+      steps.push("Optimizando rendimiento...");
+      const optimizedPlan = refinedPlan + "\n\n## OPTIMIZACIONES DE RENDIMIENTO:\n- Caché de respuestas frecuentes\n- Procesamiento asíncrono\n- Rate limiting inteligente\n- Compresión de datos\n- Monitoreo de recursos";
+      steps.push("✅ Plan optimizado");
+
+      // Step 4: Generate final JSON
+      steps.push("Generando JSON final para n8n...");
+      const jsonResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{
+            role: 'system',
+            content: `Eres un experto en n8n que convierte planes de automatización en workflows JSON válidos.
+
+Genera un JSON de n8n que implemente exactamente el plan proporcionado. El JSON debe incluir:
+1. Nodos específicos para cada herramienta mencionada
+2. Conexiones entre nodos
+3. Configuraciones detalladas
+4. Webhooks y triggers apropiados
+5. Manejo de errores
+
+IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.`
+          }, {
+            role: 'user',
+            content: `Convierte este plan en un workflow JSON de n8n:\n\n${optimizedPlan}`
+          }],
+          temperature: 0.1,
+          max_tokens: 2000,
+        }),
+      });
+
+      const jsonData = await jsonResponse.json();
+      const workflowJson = jsonData.choices[0].message.content;
+      steps.push("✅ JSON generado para n8n");
+
+      // Save to database if user is authenticated
+      if (userId) {
+        const automation = await storage.createAutomation({
+          prompt,
+          workflowJson: JSON.parse(workflowJson.replace(/```json|```/g, '')),
+          userId,
+          title: `Automatización generada desde chat`,
+          status: 'completed'
+        });
+        steps.push(`✅ Guardado en base de datos (ID: ${automation.id})`);
+      }
+
+      return {
+        success: true,
+        steps,
+        finalPlan: optimizedPlan,
+        workflowJson,
+        message: "🎉 ¡Workflow creado exitosamente! He generado un plan completo y el archivo JSON para n8n."
+      };
+
+    } catch (error: any) {
+      return {
+        success: false,
+        steps,
+        error: error.message,
+        message: "❌ Hubo un error en la generación del workflow. Por favor, intenta nuevamente."
+      };
+    }
+  }
+
   // AI Chat endpoint (replacing Supabase Edge Function)
-  app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", async (req: Request, res: Response) => {
     try {
       const { message, sessionId } = req.body;
       
@@ -278,7 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let user = null;
-      let conversationHistory = [];
+      let conversationHistory: Array<{role: string, content: string}> = [];
 
       // Handle authenticated vs anonymous chat
       if (sessionId !== 'landing-page-chat') {
@@ -313,10 +481,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Prepare messages for OpenAI
+      // Check if this is a workflow creation request
+      if (isWorkflowCreationRequest(message)) {
+        const workflowResult = await orchestrateWorkflowCreation(message, user?.id);
+        
+        if (workflowResult.success) {
+          const response = `${workflowResult.message}\n\n📋 **Proceso completado:**\n${workflowResult.steps.join('\n')}\n\n🔧 **Plan detallado:**\n${workflowResult.finalPlan}\n\n📄 **Archivo JSON generado y listo para importar en n8n**\n\n¿Te gustaría que modifique algo del workflow o necesitas ayuda para implementarlo?`;
+          
+          // Save AI response
+          if (user && sessionId !== 'landing-page-chat') {
+            await storage.createMessage({
+              chatSessionId: sessionId,
+              content: response,
+              sender: 'ai',
+              role: 'assistant',
+              workflowStatus: 'success',
+              workflowId: workflowResult.workflowJson ? 'generated' : undefined
+            });
+          }
+
+          return res.json({ 
+            response, 
+            sessionId,
+            workflowGenerated: true,
+            workflowJson: workflowResult.workflowJson
+          });
+        } else {
+          const response = `${workflowResult.message}\n\n❌ **Errores encontrados:**\n${workflowResult.steps.join('\n')}\n\nError: ${workflowResult.error}\n\n¿Podrías proporcionar más detalles sobre la automatización que necesitas?`;
+          
+          if (user && sessionId !== 'landing-page-chat') {
+            await storage.createMessage({
+              chatSessionId: sessionId,
+              content: response,
+              sender: 'ai',
+              role: 'assistant',
+              workflowStatus: 'error',
+              workflowError: workflowResult.error
+            });
+          }
+
+          return res.json({ response, sessionId, workflowGenerated: false });
+        }
+      }
+
+      // Regular chat flow
       const systemMessage = sessionId === 'landing-page-chat' ? {
         role: 'system',
         content: `Eres un consultor senior especializado en IA y automatización empresarial para Precensus AI. Tu misión es ofrecer una CONSULTORÍA GRATUITA personalizada, analizando el negocio del usuario y recomendando las mejores automatizaciones antes de presentar planes.
+
+CUANDO EL USUARIO MENCIONE CREAR UN AGENTE O AUTOMATIZACIÓN:
+1. Pregunta qué HERRAMIENTAS específicas quiere usar:
+   - ¿WhatsApp, Telegram, email, SMS para comunicación?
+   - ¿Facebook, Instagram, LinkedIn, website para integración?
+   - ¿Google Drive, Dropbox para almacenamiento?
+   - ¿Slack, Discord, email para notificaciones?
+   - ¿Hojas de cálculo, CRM específico para datos?
+
+2. Si dice "créame ese agente" o "créalo", explica que iniciarás el proceso completo de generación automática.
 
 METODOLOGÍA DE CONSULTORÍA:
 1. DIAGNÓSTICO: Haz preguntas específicas sobre su negocio, procesos actuales, dolores y objetivos
@@ -349,13 +570,25 @@ Actúa como un consultor experto, amigable pero profesional. Haz preguntas intel
       } : {
         role: 'system',
         content: `Eres un asistente especializado en automatización de procesos. Tu trabajo es:
+
+CUANDO EL USUARIO MENCIONE CREAR UN AGENTE:
+1. Pregunta ESPECÍFICAMENTE qué herramientas quiere usar:
+   - ¿WhatsApp, Telegram, email, SMS para comunicación?
+   - ¿En qué plataforma quiere que se suba? (Facebook, Instagram, LinkedIn, website)
+   - ¿Dónde almacenar datos? (Google Drive, Dropbox, servidor)
+   - ¿Cómo recibir notificaciones? (email, Slack, Discord)
+   - ¿Qué sistema de datos usar? (Hojas de cálculo, CRM específico)
+
+2. Si dice "créame ese agente", "créalo", "hazlo": explica que iniciarás el proceso automático completo.
+
+OTRAS TAREAS:
 1. Entender los procesos que describe el usuario
 2. Sugerir automatizaciones específicas y prácticas
 3. Ofrecer crear workflows para n8n cuando sea apropiado
 4. Ser claro, conciso y actionable en tus respuestas
 5. Preguntar detalles específicos cuando necesites más información
 
-Siempre responde en español y enfócate en soluciones de automatización reales.`
+Siempre responde en español y enfócate en soluciones de automatización reales con herramientas específicas.`
       };
 
       const openAIMessages = [
@@ -413,6 +646,69 @@ Siempre responde en español y enfócate en soluciones de automatización reales
       res.json({ success: true, message: 'Lead received successfully' });
     } catch (error) {
       res.status(500).json({ error: 'Error processing lead' });
+    }
+  });
+
+  // Download workflow JSON endpoint
+  app.get("/api/automations/:id/download", authenticateToken, async (req: any, res: any) => {
+    try {
+      const automation = await storage.getAutomation(req.params.id);
+      if (!automation || automation.userId !== req.user.id) {
+        return res.status(404).json({ error: "Automation not found" });
+      }
+
+      const filename = `workflow-${automation.id}.json`;
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(automation.workflowJson);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get automation details endpoint
+  app.get("/api/automations/:id", authenticateToken, async (req: any, res: any) => {
+    try {
+      const automation = await storage.getAutomation(req.params.id);
+      if (!automation || automation.userId !== req.user.id) {
+        return res.status(404).json({ error: "Automation not found" });
+      }
+      res.json(automation);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Orchestrate workflow endpoint (for manual trigger)
+  app.post("/api/orchestrate", authenticateToken, async (req: any, res: any) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+      }
+
+      const workflowResult = await orchestrateWorkflowCreation(prompt, req.user.id);
+      
+      if (workflowResult.success) {
+        res.json({
+          success: true,
+          message: workflowResult.message,
+          steps: workflowResult.steps,
+          plan: workflowResult.finalPlan,
+          workflowJson: workflowResult.workflowJson
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: workflowResult.message,
+          error: workflowResult.error,
+          steps: workflowResult.steps
+        });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 

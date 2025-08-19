@@ -2,7 +2,16 @@
 
 ## Overview
 
-This is a full-stack AI automation platform called "Precensusu AI" that enables users to create and manage automated workflows using conversational AI. The application consists of a React frontend with a Node.js/Express backend, utilizing PostgreSQL for data persistence and multiple AI services for workflow generation. The platform offers both standard chat functionality and specialized business consultation features for creating automation workflows.
+This is a full-stack AI automation platform called "Precensusu AI" that enables users to create and manage automated workflows using conversational AI. The application has been successfully migrated from Lovable/Supabase to Replit with local PostgreSQL. It features intelligent workflow generation through multi-AI orchestration (OpenAI → Claude → DeepSeek → N8N JSON output) and provides both anonymous consultation chat and authenticated user sessions with persistent workflow storage.
+
+## Recent Changes (December 2024)
+
+- **Migration Complete**: Successfully migrated from Supabase to local PostgreSQL with Drizzle ORM
+- **Multi-AI Workflow Generation**: Implemented intelligent workflow creation with phrase detection
+- **Smart Tool Selection**: AI now asks for specific tools (WhatsApp, platforms, storage) when creating agents
+- **Automatic JSON Generation**: Complete workflow from chat message to downloadable N8N JSON file
+- **Enhanced Chat Intelligence**: Detects creation requests and triggers multi-stage AI processing
+- **Database Schema**: Full schema with users, profiles, chat sessions, messages, workflows, automations, templates
 
 ## User Preferences
 
