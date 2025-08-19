@@ -4,8 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Bot } from "lucide-react";
 
@@ -17,30 +15,15 @@ export default function Auth() {
   const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is already logged in
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          navigate("/chat");
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        navigate("/chat");
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      navigate("/chat");
+    }
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -50,51 +33,31 @@ export default function Auth() {
     try {
       if (isLogin) {
         // Login
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
         });
 
-        if (error) {
-          console.error("Login error:", error);
-          const lower = (error.message || "").toLowerCase();
-
-          if (lower.includes("confirm") || lower.includes("not confirmed")) {
-            try {
-              const redirectUrl = `${window.location.origin}/`;
-              await supabase.auth.resend({
-                type: "signup",
-                email,
-                options: { emailRedirectTo: redirectUrl },
-              });
-              toast({
-                title: "Confirma tu correo",
-                description:
-                  "Te reenviamos el email de confirmación. Revisa tu bandeja de entrada y spam.",
-              });
-            } catch (e) {
-              console.error("Resend confirm error:", e);
-            }
-          } else if (lower.includes("invalid login credentials")) {
-            toast({
-              variant: "destructive",
-              title: "Credenciales inválidas",
-              description: "Revisa tu email y contraseña.",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Error de inicio de sesión",
-              description: error.message,
-            });
-          }
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            variant: "destructive",
+            title: "Error de autenticación",
+            description: errorData.error || "Credenciales inválidas"
+          });
           return;
         }
 
+        const data = await response.json();
+        localStorage.setItem('auth_token', data.token);
         toast({
           title: "¡Bienvenido!",
-          description: "Has iniciado sesión correctamente.",
+          description: "Has iniciado sesión exitosamente."
         });
+        navigate("/chat");
       } else {
         // Signup
         if (password !== confirmPassword) {
@@ -115,61 +78,31 @@ export default function Auth() {
           return;
         }
 
-        const redirectUrl = `${window.location.origin}/`;
-        
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: redirectUrl,
-            data: {
-              username: username,
-            }
-          }
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password, username })
         });
 
-        if (error) {
-          console.error("Signup error:", error);
-          const lower = (error.message || "").toLowerCase();
-          if (lower.includes("already") && lower.includes("registered")) {
-            toast({
-              title: "Usuario ya registrado",
-              description: "Ya existe una cuenta con ese email. Inicia sesión.",
-            });
-            setIsLogin(true);
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Error de registro",
-              description: error.message,
-            });
-          }
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            variant: "destructive",
+            title: "Error de registro",
+            description: errorData.error || "Error al crear la cuenta"
+          });
           return;
         }
 
-        if (data.user && !data.session) {
-          toast({
-            title: "¡Registro exitoso!",
-            description: "Por favor, revisa tu email para confirmar tu cuenta.",
-          });
-        } else if (data.session) {
-          // Create profile
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert({
-              user_id: data.user!.id,
-              username: username,
-            });
-
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-          }
-
-          toast({
-            title: "¡Bienvenido!",
-            description: "Tu cuenta ha sido creada exitosamente.",
-          });
-        }
+        const data = await response.json();
+        localStorage.setItem('auth_token', data.token);
+        toast({
+          title: "¡Bienvenido!",
+          description: "Tu cuenta ha sido creada exitosamente."
+        });
+        navigate("/chat");
       }
     } catch (error) {
       toast({

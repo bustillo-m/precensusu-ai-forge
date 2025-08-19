@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+
+interface User {
+  id: string;
+  email: string;
+  username: string;
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -63,24 +67,29 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
     if (!currentChatId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("chat_session_id", currentChatId)
-        .order("created_at", { ascending: true });
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
 
-      if (error) {
-        console.error("Error fetching messages:", error);
+      const response = await fetch(`/api/chat-sessions/${currentChatId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Error fetching messages");
         return;
       }
 
+      const data = await response.json();
+
       // Transform database records to Message interface
-      const transformedMessages: Message[] = (data || []).map(record => ({
+      const transformedMessages: Message[] = (data || []).map((record: any) => ({
         id: record.id,
         content: record.content,
         sender: record.sender as "user" | "ai",
-        session_id: record.chat_session_id,
-        created_at: record.created_at,
+        session_id: record.chatSessionId,
+        created_at: record.createdAt,
         message_type: record.role as 'question' | 'proposal' | 'standard' | undefined
       }));
 
@@ -92,29 +101,37 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
 
   const saveMessage = async (message: Omit<Message, "id" | "created_at">) => {
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({
+      const token = localStorage.getItem('auth_token');
+      if (!token) return null;
+
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
           content: message.content,
           sender: message.sender,
-          chat_session_id: message.session_id,
+          chatSessionId: message.session_id,
           role: message.message_type || 'standard'
         })
-        .select()
-        .single();
+      });
 
-      if (error) {
-        console.error("Error saving message:", error);
+      if (!response.ok) {
+        console.error("Error saving message");
         return null;
       }
+
+      const data = await response.json();
 
       // Transform database record to Message interface
       const transformedMessage: Message = {
         id: data.id,
         content: data.content,
         sender: data.sender as "user" | "ai",
-        session_id: data.chat_session_id,
-        created_at: data.created_at,
+        session_id: data.chatSessionId,
+        created_at: data.createdAt,
         message_type: data.role as 'question' | 'proposal' | 'standard' | undefined
       };
 
@@ -137,16 +154,20 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
 
   const generateAIResponse = async (userMessage: string, sessionId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           message: userMessage,
-          sessionId: sessionId,
-          business_context: businessData,
-          current_phase: currentPhase
-        }
+          sessionId: sessionId
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to generate AI response');
+
+      const data = await response.json();
 
       // Analyze the conversation to determine next phase
       const messageCount = messages.filter(m => m.sender === 'user').length;

@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+
+interface User {
+  id: string;
+  email: string;
+  username: string;
+}
 import {
   Sidebar,
   SidebarContent,
@@ -49,18 +53,24 @@ export function BusinessChatSidebar({ user, currentChatId, onChatSelect, onCreat
 
   const fetchChatSessions = async () => {
     try {
-      const { data, error } = await supabase
-        .from("chat_sessions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching chat sessions:", error);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        navigate("/auth");
         return;
       }
 
-      // Show all chat sessions for business chat
+      const response = await fetch('/api/chat-sessions', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Error fetching chat sessions");
+        return;
+      }
+
+      const data = await response.json();
       setChatSessions(data || []);
     } catch (error) {
       console.error("Error fetching chat sessions:", error);
@@ -82,13 +92,21 @@ export function BusinessChatSidebar({ user, currentChatId, onChatSelect, onCreat
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      const { error } = await supabase
-        .from("chat_sessions")
-        .delete()
-        .eq("id", chatId);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        navigate("/auth");
+        return;
+      }
 
-      if (error) {
-        console.error("Error deleting chat session:", error);
+      const response = await fetch(`/api/chat-sessions/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Error deleting chat session");
         return;
       }
 
@@ -103,7 +121,7 @@ export function BusinessChatSidebar({ user, currentChatId, onChatSelect, onCreat
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('auth_token');
     navigate("/");
   };
 
