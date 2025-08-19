@@ -460,20 +460,25 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
             user = await storage.getUser(decoded.userId);
             
             if (user) {
-              // Save user message
-              await storage.createMessage({
-                chatSessionId: sessionId,
-                content: message,
-                sender: 'user',
-                role: 'user'
-              });
+              try {
+                // Save user message
+                await storage.createMessage({
+                  chatSessionId: sessionId,
+                  content: message,
+                  sender: 'user',
+                  role: 'user'
+                });
 
-              // Get conversation history
-              const messages = await storage.getMessagesBySession(sessionId, 10);
-              conversationHistory = messages.map(msg => ({
-                role: msg.role || 'user',
-                content: msg.content
-              }));
+                // Get conversation history
+                const messages = await storage.getMessagesBySession(sessionId, 10);
+                conversationHistory = messages.map(msg => ({
+                  role: msg.role || 'user',
+                  content: msg.content
+                }));
+              } catch (storageError) {
+                console.error('Storage error in chat:', storageError);
+                // Continue without saving to database for now
+              }
             }
           } catch (error) {
             // Continue as anonymous
@@ -490,14 +495,18 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
           
           // Save AI response
           if (user && sessionId !== 'landing-page-chat') {
-            await storage.createMessage({
-              chatSessionId: sessionId,
-              content: response,
-              sender: 'ai',
-              role: 'assistant',
-              workflowStatus: 'success',
-              workflowId: workflowResult.workflowJson ? 'generated' : undefined
-            });
+            try {
+              await storage.createMessage({
+                chatSessionId: sessionId,
+                content: response,
+                sender: 'ai',
+                role: 'assistant',
+                workflowStatus: 'success',
+                workflowId: workflowResult.workflowJson ? 'generated' : undefined
+              });
+            } catch (storageError) {
+              console.error('Storage error saving AI response:', storageError);
+            }
           }
 
           return res.json({ 
@@ -621,17 +630,22 @@ Siempre responde en español y enfócate en soluciones de automatización reales
 
       // Save AI response for authenticated users
       if (user && sessionId !== 'landing-page-chat') {
-        await storage.createMessage({
-          chatSessionId: sessionId,
-          content: aiResponse,
-          sender: 'ai',
-          role: 'assistant'
-        });
+        try {
+          await storage.createMessage({
+            chatSessionId: sessionId,
+            content: aiResponse,
+            sender: 'ai',
+            role: 'assistant'
+          });
+        } catch (storageError) {
+          console.error('Storage error saving final AI response:', storageError);
+        }
       }
 
       res.json({ response: aiResponse, sessionId });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Chat API error:', error);
+      res.status(500).json({ error: 'Error generating AI response' });
     }
   });
 
