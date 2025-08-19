@@ -1,64 +1,80 @@
 import { useState, useEffect } from "react";
-import { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { ChatArea } from "@/components/ChatArea";
 import { useToast } from "@/hooks/use-toast";
 
+interface User {
+  id: string;
+  email: string;
+  username: string;
+}
+
 export default function Chat() {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (!session?.user) {
-          navigate("/auth");
-        } else {
-          setLoading(false);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
       
-      if (!session?.user) {
+      if (!token) {
         navigate("/auth");
-      } else {
-        setLoading(false);
+        return;
       }
-    });
 
-    return () => subscription.unsubscribe();
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          localStorage.removeItem('auth_token');
+          navigate("/auth");
+          return;
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.removeItem('auth_token');
+        navigate("/auth");
+        return;
+      }
+      
+      setLoading(false);
+    };
+
+    checkAuth();
   }, [navigate]);
 
   const handleCreateChat = async (title: string = "Nueva conversación") => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from("chat_sessions")
-        .insert({
-          user_id: user.id,
-          title,
-        })
-        .select()
-        .single();
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        navigate("/auth");
+        return null;
+      }
 
-      if (error) {
+      const response = await fetch('/api/chat-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ title })
+      });
+
+      if (!response.ok) {
         toast({
           variant: "destructive",
           title: "Error",
@@ -67,6 +83,7 @@ export default function Chat() {
         return null;
       }
 
+      const data = await response.json();
       setCurrentChatId(data.id);
       return data.id;
     } catch (error) {
@@ -91,7 +108,7 @@ export default function Chat() {
     );
   }
 
-  if (!user || !session) {
+  if (!user) {
     return null;
   }
 

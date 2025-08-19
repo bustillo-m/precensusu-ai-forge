@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+
+interface User {
+  id: string;
+  email: string;
+  username: string;
+}
 import { 
   Bot, 
   Plus, 
@@ -27,7 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -78,17 +83,19 @@ export function ChatSidebar({
 
   const fetchChatSessions = async () => {
     try {
-      const { data, error } = await supabase
-        .from("chat_sessions")
-        .select("*")
-        .order("updated_at", { ascending: false });
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
 
-      if (error) {
-        console.error("Error fetching chat sessions:", error);
-        return;
+      const response = await fetch('/api/chat-sessions', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setChatSessions(data || []);
       }
-
-      setChatSessions(data || []);
     } catch (error) {
       console.error("Error fetching chat sessions:", error);
     } finally {
@@ -109,12 +116,17 @@ export function ChatSidebar({
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      const { error } = await supabase
-        .from("chat_sessions")
-        .delete()
-        .eq("id", chatId);
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
 
-      if (error) {
+      const response = await fetch(`/api/chat-sessions/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
         toast({
           variant: "destructive",
           title: "Error",
@@ -145,7 +157,7 @@ export function ChatSidebar({
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      localStorage.removeItem('auth_token');
       navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);
