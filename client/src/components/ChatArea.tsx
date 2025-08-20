@@ -47,12 +47,38 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
   const { toast } = useToast();
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ 
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest"
+    });
   };
 
+  // Auto-scroll when messages change
   useEffect(() => {
-    scrollToBottom();
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages]);
+
+  // Auto-scroll when form states change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [showCreateButton, showContactForm, isCreatingAutomation]);
+
+  // Auto-scroll when input changes (user typing)
+  useEffect(() => {
+    if (input.length > 0) {
+      const timer = setTimeout(() => {
+        scrollToBottom();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [input]);
 
   useEffect(() => {
     if (currentChatId) {
@@ -609,7 +635,7 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <div className="border-b p-4">
+      <div className="border-b p-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Bot className="h-6 w-6 text-primary" />
           <div>
@@ -644,7 +670,7 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -743,106 +769,116 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Create Automation Button */}
-      {showCreateButton && !showContactForm && !isCreatingAutomation && (
-        <div className="border-t bg-primary/5 p-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
-              <h3 className="text-xl font-semibold mb-2">🤖 ¡Listo para crear tu automatización!</h3>
-              <p className="text-muted-foreground mb-4">
-                Nuestro sistema de 4 IAs especializadas generará tu workflow personalizado
-              </p>
-              <Button onClick={handleCreateAutomation} size="lg" className="w-full sm:w-auto">
-                <Bot className="h-5 w-5 mr-2" />
-                Crear Automatización
-              </Button>
+      {/* Bottom Section - Fixed at bottom */}
+      <div className="flex-shrink-0">
+        {/* Create Automation Button */}
+        {showCreateButton && !showContactForm && !isCreatingAutomation && (
+          <div className="border-t bg-primary/5 p-6">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
+                <h3 className="text-xl font-semibold mb-2">🤖 ¡Listo para crear tu automatización!</h3>
+                <p className="text-muted-foreground mb-4">
+                  Nuestro sistema de 4 IAs especializadas generará tu workflow personalizado
+                </p>
+                <Button onClick={handleCreateAutomation} size="lg" className="w-full sm:w-auto">
+                  <Bot className="h-5 w-5 mr-2" />
+                  Crear Automatización
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Contact Form */}
-      {showContactForm && (
-        <div className="border-t bg-primary/5 p-6">
-          <div className="max-w-md mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
-              <h3 className="text-lg font-semibold mb-4">📧 Datos de contacto</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <Input
-                    type="email"
-                    value={contactData.email}
-                    onChange={(e) => setContactData({...contactData, email: e.target.value})}
-                    placeholder="tu@email.com"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Teléfono</label>
-                  <Input
-                    type="tel"
-                    value={contactData.phone}
-                    onChange={(e) => setContactData({...contactData, phone: e.target.value})}
-                    placeholder="+34 123 456 789"
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button onClick={handleSubmitContactForm} className="flex-1">
-                    Enviar y Crear
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowContactForm(false)}
-                    className="flex-1"
-                  >
-                    Cancelar
-                  </Button>
+        {/* Contact Form */}
+        {showContactForm && (
+          <div className="border-t bg-primary/5 p-6">
+            <div className="max-w-md mx-auto">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
+                <h3 className="text-lg font-semibold mb-4">📧 Datos de contacto</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Email</label>
+                    <Input
+                      type="email"
+                      value={contactData.email}
+                      onChange={(e) => setContactData({...contactData, email: e.target.value})}
+                      placeholder="tu@email.com"
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Teléfono</label>
+                    <Input
+                      type="tel"
+                      value={contactData.phone}
+                      onChange={(e) => setContactData({...contactData, phone: e.target.value})}
+                      placeholder="+34 123 456 789"
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button onClick={handleSubmitContactForm} className="flex-1">
+                      Enviar y Crear
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowContactForm(false)}
+                      className="flex-1"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Creating Automation Loading */}
-      {isCreatingAutomation && (
-        <div className="border-t bg-primary/5 p-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-              <h3 className="text-lg font-semibold mb-2">🔄 Generando automatización...</h3>
-              <p className="text-muted-foreground">
-                Nuestras 4 IAs están trabajando en tu workflow personalizado
-              </p>
+        {/* Creating Automation Loading */}
+        {isCreatingAutomation && (
+          <div className="border-t bg-primary/5 p-6">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <h3 className="text-lg font-semibold mb-2">🔄 Generando automatización...</h3>
+                <p className="text-muted-foreground">
+                  Nuestras 4 IAs están trabajando en tu workflow personalizado
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Input */}
-      {!showContactForm && !isCreatingAutomation && (
-        <div className="border-t p-6">
-          <div className="flex gap-3 max-w-4xl mx-auto">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Describe el proceso que quieres automatizar..."
-              disabled={isLoading}
-              className="flex-1 h-12 rounded-full px-6 text-base"
-            />
-            <Button onClick={handleSend} disabled={isLoading || !input.trim()} size="lg" className="rounded-full h-12 w-12 p-0">
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </Button>
+        {/* Input - Always visible at bottom */}
+        {!showContactForm && !isCreatingAutomation && (
+          <div className="border-t p-6 bg-background">
+            <div className="flex gap-3 max-w-4xl mx-auto">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Describe el proceso que quieres automatizar..."
+                disabled={isLoading}
+                className="flex-1 h-12 rounded-full px-6 text-base"
+                data-testid="input-chat-message"
+              />
+              <Button 
+                onClick={handleSend} 
+                disabled={isLoading || !input.trim()} 
+                size="lg" 
+                className="rounded-full h-12 w-12 p-0"
+                data-testid="button-send-message"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
