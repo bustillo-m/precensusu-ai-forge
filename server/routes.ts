@@ -414,27 +414,36 @@ Responde en español y sé muy específico sobre las herramientas.`
         }),
       });
 
+      if (!plannerResponse.ok) {
+        throw new Error(`Error en ChatGPT Planner: ${plannerResponse.statusText}`);
+      }
+
       const plannerData = await plannerResponse.json();
+      if (!plannerData.choices || !plannerData.choices[0]) {
+        throw new Error('Respuesta inválida de ChatGPT Planner');
+      }
+
       const initialPlan = plannerData.choices[0].message.content;
       steps.push("✅ Plan inicial creado");
 
       // Step 2: Claude Refiner (si tenemos la API key)
       let refinedPlan = initialPlan;
       if (process.env.ANTHROPIC_API_KEY) {
-        steps.push("Refinando con Claude...");
-        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': process.env.ANTHROPIC_API_KEY,
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-3-sonnet-20240229',
-            max_tokens: 1500,
-            messages: [{
-              role: 'user',
-              content: `Refina este plan de automatización agregando:
+        try {
+          steps.push("Refinando con Claude...");
+          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': process.env.ANTHROPIC_API_KEY,
+              'Content-Type': 'application/json',
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-3-sonnet-20240229',
+              max_tokens: 1500,
+              messages: [{
+                role: 'user',
+                content: `Refina este plan de automatización agregando:
 1. Manejo de errores robusto
 2. Validaciones de datos
 3. Seguridad y permisos
@@ -445,15 +454,27 @@ Plan original:
 ${initialPlan}
 
 Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y profesional.`
-            }]
-          }),
-        });
+              }]
+            }),
+          });
 
-        if (claudeResponse.ok) {
-          const claudeData = await claudeResponse.json();
-          refinedPlan = claudeData.content[0].text;
-          steps.push("✅ Plan refinado con Claude");
+          if (claudeResponse.ok) {
+            const claudeData = await claudeResponse.json();
+            if (claudeData.content && claudeData.content[0]) {
+              refinedPlan = claudeData.content[0].text;
+              steps.push("✅ Plan refinado con Claude");
+            } else {
+              steps.push("⚠️ Claude: respuesta inválida, usando plan inicial");
+            }
+          } else {
+            steps.push("⚠️ Claude: API error, usando plan inicial");
+          }
+        } catch (claudeError: any) {
+          console.error('Claude API error:', claudeError);
+          steps.push(`⚠️ Claude: ${claudeError.message}, usando plan inicial`);
         }
+      } else {
+        steps.push("⚠️ Claude API key no configurada, saltando refinamiento");
       }
 
       // Step 3: DeepSeek Optimizer (simulado por ahora)
@@ -492,20 +513,54 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
         }),
       });
 
+      if (!jsonResponse.ok) {
+        throw new Error(`Error en generación JSON: ${jsonResponse.statusText}`);
+      }
+
       const jsonData = await jsonResponse.json();
-      const workflowJson = jsonData.choices[0].message.content;
+      let workflowJson = jsonData.choices[0].message.content;
       steps.push("✅ JSON generado para n8n");
+
+      // Clean JSON string - remove markdown formatting
+      workflowJson = workflowJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      // Validate JSON
+      let parsedJson;
+      try {
+        parsedJson = JSON.parse(workflowJson);
+      } catch (parseError) {
+        // If JSON is invalid, create a basic workflow structure
+        parsedJson = {
+          name: "Automatización Personalizada",
+          nodes: [
+            {
+              name: "Start",
+              type: "n8n-nodes-base.start",
+              parameters: {},
+              position: [250, 300]
+            }
+          ],
+          connections: {}
+        };
+        workflowJson = JSON.stringify(parsedJson, null, 2);
+        steps.push("⚠️ JSON corregido - estructura básica aplicada");
+      }
 
       // Save to database if user is authenticated
       if (userId) {
-        const automation = await storage.createAutomation({
-          prompt,
-          workflowJson: JSON.parse(workflowJson.replace(/```json|```/g, '')),
-          userId,
-          title: `Automatización generada desde chat`,
-          status: 'completed'
-        });
-        steps.push(`✅ Guardado en base de datos (ID: ${automation.id})`);
+        try {
+          const automation = await storage.createAutomation({
+            prompt,
+            workflowJson: parsedJson,
+            userId,
+            title: `Automatización generada desde chat`,
+            status: 'completed'
+          });
+          steps.push(`✅ Guardado en base de datos (ID: ${automation.id})`);
+        } catch (dbError: any) {
+          console.error('Error saving to database:', dbError);
+          steps.push(`⚠️ Error guardando en BD: ${dbError.message}`);
+        }
       }
 
       return {
