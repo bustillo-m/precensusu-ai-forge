@@ -1,12 +1,72 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import sgMail from "@sendgrid/mail";
 import { storage } from "./storage";
 import { insertUserSchema, insertChatSessionSchema, insertMessageSchema, insertWorkflowSchema, insertAutomationSchema, type User } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// Configure SendGrid
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key";
+
+// Function to send workflow JSON via email
+async function sendWorkflowEmail(workflowJson: any, userEmail: string, userPhone: string, conversationContext: string) {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.error('SendGrid API key not configured');
+    return;
+  }
+
+  // Your company emails - you can change these to your real emails
+  const companyEmails = ['admin@precensus.com', 'team@precensus.com'];
+  
+  const msg = {
+    to: companyEmails,
+    from: 'noreply@precensus.com', // You'll need to verify this email in SendGrid
+    subject: `Nueva automatización generada - Cliente: ${userEmail}`,
+    text: `Se ha generado una nueva automatización para el cliente:
+
+Email: ${userEmail}
+Teléfono: ${userPhone}
+
+Contexto de la conversación:
+${conversationContext}
+
+El archivo JSON está adjunto como attachment.`,
+    html: `
+      <h2>Nueva Automatización Generada</h2>
+      <p><strong>Cliente:</strong> ${userEmail}</p>
+      <p><strong>Teléfono:</strong> ${userPhone}</p>
+      
+      <h3>Contexto de la conversación:</h3>
+      <p>${conversationContext.replace(/\n/g, '<br>')}</p>
+      
+      <p>El archivo JSON de la automatización está adjunto.</p>
+      
+      <hr>
+      <p><em>Este email fue generado automáticamente por Precensus AI</em></p>
+    `,
+    attachments: [
+      {
+        content: Buffer.from(JSON.stringify(workflowJson, null, 2)).toString('base64'),
+        filename: `workflow-${Date.now()}.json`,
+        type: 'application/json',
+        disposition: 'attachment'
+      }
+    ]
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log('Workflow email sent successfully');
+  } catch (error) {
+    console.error('Error sending workflow email:', error);
+  }
+}
 
 // Middleware to verify JWT token
 const authenticateToken = async (req: any, res: any, next: any) => {
@@ -488,49 +548,47 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
 
       // Check if this is a workflow creation request
       if (isWorkflowCreationRequest(message)) {
-        const workflowResult = await orchestrateWorkflowCreation(message, user?.id);
-        
-        if (workflowResult.success) {
-          const response = `${workflowResult.message}\n\n📋 **Proceso completado:**\n${workflowResult.steps.join('\n')}\n\n🔧 **Plan detallado:**\n${workflowResult.finalPlan}\n\n📄 **Archivo JSON generado y listo para importar en n8n**\n\n¿Te gustaría que modifique algo del workflow o necesitas ayuda para implementarlo?`;
-          
-          // Save AI response
-          if (user && sessionId !== 'landing-page-chat') {
-            try {
-              await storage.createMessage({
-                chatSessionId: sessionId,
-                content: response,
-                sender: 'ai',
-                role: 'assistant',
-                workflowStatus: 'success',
-                workflowId: workflowResult.workflowJson ? 'generated' : undefined
-              });
-            } catch (storageError) {
-              console.error('Storage error saving AI response:', storageError);
-            }
-          }
+        // Instead of generating immediately, ask for more information and show button
+        const response = `¡Perfecto! Veo que quieres crear una automatización. Para diseñar el agente perfecto para tu negocio, necesito conocer algunos detalles específicos:
 
-          return res.json({ 
-            response, 
-            sessionId,
-            workflowGenerated: true,
-            workflowJson: workflowResult.workflowJson
-          });
-        } else {
-          const response = `${workflowResult.message}\n\n❌ **Errores encontrados:**\n${workflowResult.steps.join('\n')}\n\nError: ${workflowResult.error}\n\n¿Podrías proporcionar más detalles sobre la automatización que necesitas?`;
-          
-          if (user && sessionId !== 'landing-page-chat') {
+🔧 **Herramientas de comunicación:**
+- ¿Usarás WhatsApp, Telegram, email, SMS?
+
+🌐 **Plataformas de integración:**
+- ¿Facebook, Instagram, LinkedIn, tu website?
+
+💾 **Almacenamiento de datos:**
+- ¿Google Drive, Dropbox, servidor local?
+
+📢 **Notificaciones:**
+- ¿Email, Slack, Discord, otro?
+
+📊 **Sistema de datos:**
+- ¿Hojas de cálculo, CRM específico, base de datos?
+
+📝 **Describe tu proceso actual:** ¿Qué tareas quieres automatizar exactamente?
+
+Una vez que tengas clara esta información, verás un botón "Crear Automatización" que iniciará el proceso completo con nuestros 4 sistemas de IA especializados.`;
+        
+        // Save AI response
+        if (user && sessionId !== 'landing-page-chat') {
+          try {
             await storage.createMessage({
               chatSessionId: sessionId,
               content: response,
               sender: 'ai',
-              role: 'assistant',
-              workflowStatus: 'error',
-              workflowError: workflowResult.error
+              role: 'assistant'
             });
+          } catch (storageError) {
+            console.error('Storage error saving AI response:', storageError);
           }
-
-          return res.json({ response, sessionId, workflowGenerated: false });
         }
+
+        return res.json({ 
+          response, 
+          sessionId,
+          showCreateButton: true
+        });
       }
 
       // Regular chat flow
@@ -588,7 +646,9 @@ CUANDO EL USUARIO MENCIONE CREAR UN AGENTE:
    - ¿Cómo recibir notificaciones? (email, Slack, Discord)
    - ¿Qué sistema de datos usar? (Hojas de cálculo, CRM específico)
 
-2. Si dice "créame ese agente", "créalo", "hazlo": explica que iniciarás el proceso automático completo.
+2. NUNCA generes automáticamente el workflow. Siempre pide información específica primero.
+
+3. Una vez que tengas suficiente información detallada, responde: "Ya tengo toda la información necesaria. Puedes usar el botón 'Crear Automatización' para que nuestro equipo de 4 IAs especialistas genere tu workflow personalizado."
 
 OTRAS TAREAS:
 1. Entender los procesos que describe el usuario
@@ -646,6 +706,41 @@ Siempre responde en español y enfócate en soluciones de automatización reales
     } catch (error) {
       console.error('Chat API error:', error);
       res.status(500).json({ error: 'Error generating AI response' });
+    }
+  });
+
+  // Create automation with contact form
+  app.post("/api/create-automation", async (req: Request, res: Response) => {
+    try {
+      const { conversationContext, email, phone } = req.body;
+      
+      if (!conversationContext || !email || !phone) {
+        return res.status(400).json({ error: 'Faltan datos requeridos' });
+      }
+
+      // Execute multi-AI workflow
+      const workflowResult = await orchestrateWorkflowCreation(conversationContext);
+      
+      if (workflowResult.success && workflowResult.workflowJson) {
+        // Send JSON to your emails using SendGrid
+        await sendWorkflowEmail(workflowResult.workflowJson, email, phone, conversationContext);
+        
+        // Save contact info
+        console.log('New automation request:', { email, phone, timestamp: new Date() });
+        
+        return res.json({ 
+          success: true, 
+          message: 'Automatización creada exitosamente. Te contactaremos pronto.' 
+        });
+      } else {
+        return res.status(500).json({ 
+          error: 'Error generando la automatización', 
+          details: workflowResult.error 
+        });
+      }
+    } catch (error: any) {
+      console.error('Error creating automation:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   });
 

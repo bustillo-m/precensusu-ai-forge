@@ -39,6 +39,10 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [hasOfferedJson, setHasOfferedJson] = useState(false);
+  const [showCreateButton, setShowCreateButton] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactData, setContactData] = useState({ email: '', phone: '' });
+  const [isCreatingAutomation, setIsCreatingAutomation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -447,6 +451,11 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
 
       const data = await response.json();
       
+      // Check if AI wants to show create button
+      if (data.showCreateButton) {
+        setShowCreateButton(true);
+      }
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: data.response,
@@ -478,6 +487,97 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleCreateAutomation = () => {
+    setShowContactForm(true);
+    setShowCreateButton(false);
+  };
+
+  const handleSubmitContactForm = async () => {
+    if (!contactData.email || !contactData.phone) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Por favor, completa todos los campos.",
+      });
+      return;
+    }
+
+    setIsCreatingAutomation(true);
+    setShowContactForm(false);
+
+    try {
+      // Get conversation context from messages
+      const conversationContext = messages
+        .map(msg => `${msg.sender}: ${msg.content}`)
+        .join('\n\n');
+
+      const response = await fetch('/api/create-automation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          conversationContext,
+          email: contactData.email,
+          phone: contactData.phone
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        const successMessage: Message = {
+          id: Date.now().toString(),
+          content: `✅ **¡Automatización creada exitosamente!**
+
+Hemos generado tu workflow personalizado usando nuestro sistema de 4 IAs especializadas y lo hemos enviado por email para revisión.
+
+📧 **¿Qué sigue ahora?**
+- Nuestro equipo técnico revisará tu automatización
+- Te contactaremos en las próximas horas al ${contactData.phone}
+- Recibirás el archivo JSON final por email una vez validado
+
+**¡En breve nos pondremos en contacto contigo!**
+
+Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
+          sender: "ai",
+          created_at: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, successMessage]);
+        await saveMessage(successMessage);
+
+        toast({
+          title: "¡Éxito!",
+          description: "Automatización creada. Te contactaremos pronto.",
+        });
+      } else {
+        throw new Error(data.error || 'Error creando automatización');
+      }
+    } catch (error) {
+      console.error('Error creating automation:', error);
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: '❌ Hubo un error al crear la automatización. Por favor, inténtalo de nuevo o contacta con soporte.',
+        sender: "ai",
+        created_at: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+      await saveMessage(errorMessage);
+
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo crear la automatización.",
+      });
+    } finally {
+      setIsCreatingAutomation(false);
+      setContactData({ email: '', phone: '' });
     }
   };
 
@@ -643,40 +743,106 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t p-6">
-        <div className="flex gap-3 max-w-4xl mx-auto">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Describe el proceso que quieres automatizar..."
-            disabled={isLoading}
-            className="flex-1 h-12 rounded-full px-6 text-base"
-          />
-          <Button
-            variant="outline"
-            disabled={isLoading}
-            onClick={() => {
-              if (isLoading) return;
-              const prompt = "Genera el documento JSON de la automatización listo para importar en n8n. Devuelve solo JSON válido, sin comentarios.";
-              setInput(prompt);
-              setTimeout(() => handleSend(), 0);
-            }}
-            className="h-12 rounded-full px-4 gap-2"
-          >
-            <FileJson className="h-5 w-5" />
-            Crear documento JSON
-          </Button>
-          <Button onClick={handleSend} disabled={isLoading || !input.trim()} size="lg" className="rounded-full h-12 w-12 p-0">
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Send className="h-5 w-5" />
-            )}
-          </Button>
+      {/* Create Automation Button */}
+      {showCreateButton && !showContactForm && !isCreatingAutomation && (
+        <div className="border-t bg-primary/5 p-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
+              <h3 className="text-xl font-semibold mb-2">🤖 ¡Listo para crear tu automatización!</h3>
+              <p className="text-muted-foreground mb-4">
+                Nuestro sistema de 4 IAs especializadas generará tu workflow personalizado
+              </p>
+              <Button onClick={handleCreateAutomation} size="lg" className="w-full sm:w-auto">
+                <Bot className="h-5 w-5 mr-2" />
+                Crear Automatización
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Contact Form */}
+      {showContactForm && (
+        <div className="border-t bg-primary/5 p-6">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
+              <h3 className="text-lg font-semibold mb-4">📧 Datos de contacto</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <Input
+                    type="email"
+                    value={contactData.email}
+                    onChange={(e) => setContactData({...contactData, email: e.target.value})}
+                    placeholder="tu@email.com"
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Teléfono</label>
+                  <Input
+                    type="tel"
+                    value={contactData.phone}
+                    onChange={(e) => setContactData({...contactData, phone: e.target.value})}
+                    placeholder="+34 123 456 789"
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={handleSubmitContactForm} className="flex-1">
+                    Enviar y Crear
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowContactForm(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Creating Automation Loading */}
+      {isCreatingAutomation && (
+        <div className="border-t bg-primary/5 p-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+              <h3 className="text-lg font-semibold mb-2">🔄 Generando automatización...</h3>
+              <p className="text-muted-foreground">
+                Nuestras 4 IAs están trabajando en tu workflow personalizado
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Input */}
+      {!showContactForm && !isCreatingAutomation && (
+        <div className="border-t p-6">
+          <div className="flex gap-3 max-w-4xl mx-auto">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Describe el proceso que quieres automatizar..."
+              disabled={isLoading}
+              className="flex-1 h-12 rounded-full px-6 text-base"
+            />
+            <Button onClick={handleSend} disabled={isLoading || !input.trim()} size="lg" className="rounded-full h-12 w-12 p-0">
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
