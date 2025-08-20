@@ -47,38 +47,46 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
   const { toast } = useToast();
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ 
-      behavior: "smooth",
-      block: "end",
-      inline: "nearest"
-    });
+    // Method 1: Use the container ID
+    const container = document.getElementById('messages-container');
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+    
+    // Method 2: Use the ref as fallback
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end",
+        inline: "nearest"
+      });
+    }
   };
 
   // Auto-scroll when messages change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom();
-    }, 100);
+    scrollToBottom();
+    // Also scroll after a small delay to ensure DOM has updated
+    const timer = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timer);
   }, [messages]);
 
   // Auto-scroll when form states change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom();
-    }, 200);
+    const timer = setTimeout(scrollToBottom, 150);
     return () => clearTimeout(timer);
   }, [showCreateButton, showContactForm, isCreatingAutomation]);
 
-  // Auto-scroll when input changes (user typing)
+  // Auto-scroll when loading state changes
   useEffect(() => {
-    if (input.length > 0) {
-      const timer = setTimeout(() => {
-        scrollToBottom();
-      }, 50);
+    if (isLoading) {
+      const timer = setTimeout(scrollToBottom, 50);
       return () => clearTimeout(timer);
     }
-  }, [input]);
+  }, [isLoading]);
 
   useEffect(() => {
     if (currentChatId) {
@@ -454,6 +462,9 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
     setInput("");
     setIsLoading(true);
 
+    // Force scroll to bottom immediately after sending
+    setTimeout(scrollToBottom, 50);
+
     // Guardar mensaje del usuario
     await saveMessage(userMessage);
 
@@ -491,6 +502,9 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
 
       setMessages(prev => [...prev, aiMessage]);
       await saveMessage(aiMessage);
+      
+      // Force scroll to bottom after AI response
+      setTimeout(scrollToBottom, 50);
       
     } catch (error) {
       console.error('Error in chat:', error);
@@ -670,7 +684,7 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" id="messages-container">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -766,7 +780,7 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
             )}
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-4" />
       </div>
 
       {/* Bottom Section - Fixed at bottom */}
