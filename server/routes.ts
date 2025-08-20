@@ -335,6 +335,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return triggers.some(trigger => lowerMessage.includes(trigger));
   };
 
+  // Check if we have complete information to create workflow
+  const hasCompleteInformation = (conversationHistory: string): boolean => {
+    const conversation = conversationHistory.toLowerCase();
+    
+    // Required information checklist
+    const requirements = {
+      communicationTool: ['whatsapp', 'telegram', 'email', 'sms', 'slack', 'discord'],
+      platform: ['facebook', 'instagram', 'linkedin', 'website', 'web', 'landing', 'ecommerce', 'tienda'],
+      storage: ['google drive', 'dropbox', 'servidor', 'base de datos', 'excel', 'sheets', 'csv'],
+      businessProcess: ['ventas', 'leads', 'clientes', 'contactos', 'pedidos', 'reservas', 'citas', 'consultas'],
+      specificAction: ['enviar', 'guardar', 'notificar', 'procesar', 'validar', 'responder']
+    };
+    
+    // Check if at least 3 out of 5 categories have been mentioned
+    let categoriesMentioned = 0;
+    
+    for (const [category, keywords] of Object.entries(requirements)) {
+      if (keywords.some(keyword => conversation.includes(keyword))) {
+        categoriesMentioned++;
+      }
+    }
+    
+    // Also check if specific tools or detailed processes are mentioned
+    const hasSpecificTools = conversation.includes('n8n') || 
+                            conversation.includes('zapier') || 
+                            conversation.includes('integración') ||
+                            conversation.includes('api');
+    
+    const hasDetailedProcess = conversation.length > 200 && // Conversation has substantial content
+                              (conversation.includes('cuando') || conversation.includes('si') || 
+                               conversation.includes('entonces') || conversation.includes('después'));
+    
+    // Return true only if we have enough categories AND (specific tools OR detailed process)
+    return categoriesMentioned >= 3 && (hasSpecificTools || hasDetailedProcess);
+  };
+
   // Multi-AI workflow orchestration
   async function orchestrateWorkflowCreation(prompt: string, userId?: string) {
     const steps = [];
@@ -548,8 +584,49 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
 
       // Check if this is a workflow creation request
       if (isWorkflowCreationRequest(message)) {
-        // Instead of generating immediately, ask for more information and show button
-        const response = `¡Perfecto! Veo que quieres crear una automatización. Para diseñar el agente perfecto para tu negocio, necesito conocer algunos detalles específicos:
+        // Get conversation history to check if we have complete information
+        const fullConversation = conversationHistory.map(msg => msg.content).join(' ') + ' ' + message;
+        
+        if (hasCompleteInformation(fullConversation)) {
+          // We have enough information, show the create button
+          const response = `🎯 **¡Perfecto!** Ya tengo toda la información necesaria para crear tu automatización personalizada.
+
+📋 **He detectado en nuestra conversación:**
+- Herramientas de comunicación especificadas ✅
+- Plataformas de integración definidas ✅  
+- Proceso de negocio claro ✅
+- Acciones específicas identificadas ✅
+
+🤖 **Sistema Multi-IA listo para procesar:**
+1. **ChatGPT Planner** → Análisis y planificación inicial
+2. **Claude Refiner** → Optimización y manejo de errores  
+3. **DeepSeek Optimizer** → Rendimiento y escalabilidad
+4. **N8N Assistant** → Generación del JSON final
+
+¡Ahora puedes crear tu automatización completa!`;
+          
+          // Save AI response
+          if (user && sessionId !== 'landing-page-chat') {
+            try {
+              await storage.createMessage({
+                chatSessionId: sessionId,
+                content: response,
+                sender: 'ai',
+                role: 'assistant'
+              });
+            } catch (storageError) {
+              console.error('Storage error saving AI response:', storageError);
+            }
+          }
+
+          return res.json({ 
+            response, 
+            sessionId,
+            showCreateButton: true
+          });
+        } else {
+          // We need more information, don't show the button yet
+          const response = `¡Entiendo que quieres crear una automatización! Para diseñar el agente perfecto para tu negocio, necesito algunos detalles más específicos:
 
 🔧 **Herramientas de comunicación:**
 - ¿Usarás WhatsApp, Telegram, email, SMS?
@@ -558,37 +635,38 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
 - ¿Facebook, Instagram, LinkedIn, tu website?
 
 💾 **Almacenamiento de datos:**
-- ¿Google Drive, Dropbox, servidor local?
+- ¿Google Drive, Dropbox, servidor local, base de datos?
 
-📢 **Notificaciones:**
-- ¿Email, Slack, Discord, otro?
+📝 **Proceso específico:** 
+- ¿Qué tareas exactas quieres automatizar?
+- ¿Cuándo debe activarse la automatización?
+- ¿Qué debe hacer el sistema cuando recibe información?
 
-📊 **Sistema de datos:**
-- ¿Hojas de cálculo, CRM específico, base de datos?
+📢 **¿Cómo quieres recibir notificaciones?**
+- Email, Slack, Discord, WhatsApp
 
-📝 **Describe tu proceso actual:** ¿Qué tareas quieres automatizar exactamente?
-
-Una vez que tengas clara esta información, verás un botón "Crear Automatización" que iniciará el proceso completo con nuestros 4 sistemas de IA especializados.`;
-        
-        // Save AI response
-        if (user && sessionId !== 'landing-page-chat') {
-          try {
-            await storage.createMessage({
-              chatSessionId: sessionId,
-              content: response,
-              sender: 'ai',
-              role: 'assistant'
-            });
-          } catch (storageError) {
-            console.error('Storage error saving AI response:', storageError);
+Cuando me proporciones estos detalles, podré generar tu automatización completa con nuestro sistema de 4 IAs especializadas.`;
+          
+          // Save AI response
+          if (user && sessionId !== 'landing-page-chat') {
+            try {
+              await storage.createMessage({
+                chatSessionId: sessionId,
+                content: response,
+                sender: 'ai',
+                role: 'assistant'
+              });
+            } catch (storageError) {
+              console.error('Storage error saving AI response:', storageError);
+            }
           }
-        }
 
-        return res.json({ 
-          response, 
-          sessionId,
-          showCreateButton: true
-        });
+          return res.json({ 
+            response, 
+            sessionId,
+            showCreateButton: false // Don't show button until we have complete info
+          });
+        }
       }
 
       // Regular chat flow
@@ -702,7 +780,15 @@ Siempre responde en español y enfócate en soluciones de automatización reales
         }
       }
 
-      res.json({ response: aiResponse, sessionId });
+      // Check if user has provided enough information and we should show create button
+      const fullConversation = conversationHistory.map(msg => msg.content).join(' ') + ' ' + message + ' ' + aiResponse;
+      const shouldShowButton = hasCompleteInformation(fullConversation);
+
+      res.json({ 
+        response: aiResponse, 
+        sessionId,
+        showCreateButton: shouldShowButton
+      });
     } catch (error) {
       console.error('Chat API error:', error);
       res.status(500).json({ error: 'Error generating AI response' });
