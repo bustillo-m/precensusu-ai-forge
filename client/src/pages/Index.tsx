@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Clock, Code, Upload, Shield, Mail, Calendar, Database, FileText } from "lucide-react";
+import { CheckCircle, Clock, Code, Upload, Shield, Mail, Calendar, Database, FileText, Bot, Zap, Users, Cpu, Workflow, Brain, Target, ArrowRight } from "lucide-react";
 import { LeadForm } from "@/components/LeadForm";
 import { AutomationForm } from "@/components/AutomationForm";
+import logoImage from "@/assets/Captura_de_pantalla_2025-08-21_120039-removebg-preview.png";
 
 export default function Index() {
   useEffect(() => {
@@ -24,23 +25,39 @@ export default function Index() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background font-inter">
-      <header className="border-b">
+    <div className="min-h-screen bg-gradient-to-br from-primary via-primary/90 to-accent text-white font-inter">
+      {/* Modern Header */}
+      <header className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <span className="text-2xl font-bold font-playfair">Precensusu AI</span>
+          <div className="flex items-center gap-3">
+            <img 
+              src={logoImage} 
+              alt="Precensusu AI Logo" 
+              className="h-10 w-auto"
+            />
+            <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              Precensusu AI
+            </span>
           </div>
-          <nav className="hidden md:flex space-x-6">
-            <a href="#beneficios" className="text-muted-foreground hover:text-foreground">Beneficios</a>
-            <a href="#como-funciona" className="text-muted-foreground hover:text-foreground">Cómo funciona</a>
-            <a href="#casos" className="text-muted-foreground hover:text-foreground">Casos de uso</a>
-            <a href="#precios" className="text-muted-foreground hover:text-foreground">Planes</a>
+          <nav className="hidden md:flex space-x-8">
+            <a href="#beneficios" className="text-white/80 hover:text-white transition-colors duration-300 font-medium">Beneficios</a>
+            <a href="#como-funciona" className="text-white/80 hover:text-white transition-colors duration-300 font-medium">Cómo funciona</a>
+            <a href="#casos" className="text-white/80 hover:text-white transition-colors duration-300 font-medium">Casos de uso</a>
+            <a href="#precios" className="text-white/80 hover:text-white transition-colors duration-300 font-medium">Planes</a>
           </nav>
-          <div className="flex gap-2">
-            <Button onClick={() => window.location.href = '/business-chat'} className="gap-2">
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => window.location.href = '/business-chat'} 
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white font-semibold"
+              variant="outline"
+            >
+              <Bot className="h-4 w-4 mr-2" />
               Consultor IA
             </Button>
-            <Button variant="outline" onClick={() => document.getElementById('hero-form')?.scrollIntoView({ behavior: 'smooth' })} className="gap-2">
+            <Button 
+              onClick={() => document.getElementById('hero-form')?.scrollIntoView({ behavior: 'smooth' })} 
+              className="bg-accent hover:bg-accent/90 text-white font-semibold"
+            >
               Solicitar demo
             </Button>
           </div>
@@ -48,121 +65,413 @@ export default function Index() {
       </header>
 
       <main>
-        {/* Hero */}
-        <section className="container mx-auto px-4 py-16">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
-                Automatiza tus procesos en minutos con agentes de IA, sin necesidad de programar
-              </h1>
-              <p className="text-lg text-muted-foreground mb-6 max-w-xl">
-                Creamos flujos inteligentes listos para usar en n8n, combinando los mejores modelos de IA para ahorrar tiempo y reducir errores.
+        {/* Futuristic Hero Section */}
+        <section className="relative overflow-hidden">
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute top-40 right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute bottom-20 left-1/3 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
+          </div>
+          
+          <div className="container mx-auto px-4 py-24 relative z-10">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium">
+                    <Zap className="h-4 w-4 text-accent" />
+                    IA Empresarial Avanzada
+                  </div>
+                  <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+                    Automatiza tu empresa con{" "}
+                    <span className="bg-gradient-to-r from-accent to-white bg-clip-text text-transparent">
+                      Inteligencia Artificial
+                    </span>
+                  </h1>
+                  <p className="text-xl text-white/80 max-w-2xl leading-relaxed">
+                    Transformamos procesos empresariales en flujos inteligentes. Nuestros agentes de IA especializados optimizan operaciones, mejoran la productividad y potencian el crecimiento de tu equipo.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                    <div className="bg-accent/20 p-2 rounded-full">
+                      <Brain className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Multi-IA Avanzada</p>
+                      <p className="text-sm text-white/70">ChatGPT + Claude + DeepSeek</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                    <div className="bg-accent/20 p-2 rounded-full">
+                      <Users className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Para Empresas</p>
+                      <p className="text-sm text-white/70">Equipos más eficientes</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                    <div className="bg-accent/20 p-2 rounded-full">
+                      <Workflow className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Sin Código</p>
+                      <p className="text-sm text-white/70">Implementación inmediata</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                    <div className="bg-accent/20 p-2 rounded-full">
+                      <Target className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Resultados Medibles</p>
+                      <p className="text-sm text-white/70">ROI comprobado</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    onClick={() => document.getElementById('hero-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    size="lg" 
+                    className="bg-accent hover:bg-accent/90 text-white font-semibold px-8 py-4 text-lg"
+                  >
+                    Comenzar Ahora
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/business-chat'}
+                    variant="outline" 
+                    size="lg"
+                    className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm font-semibold px-8 py-4 text-lg"
+                  >
+                    <Bot className="h-5 w-5 mr-2" />
+                    Consultar IA Gratis
+                  </Button>
+                </div>
+              </div>
+
+              {/* Modern Form Card */}
+              <div id="hero-form" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center gap-2 bg-accent/20 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                    <Cpu className="h-4 w-4 text-accent" />
+                    Demo Personalizada
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2">Descubre el Poder de la IA</h2>
+                  <p className="text-white/80">Te mostramos cómo automatizar tu empresa en 30 minutos</p>
+                </div>
+                <div className="bg-white/5 rounded-2xl p-6">
+                  <LeadForm ctaText="Solicitar Demo Gratuita" />
+                </div>
+                <div className="text-center mt-4">
+                  <p className="text-sm text-white/60">✓ Sin compromiso ✓ Consulta especializada ✓ Resultados inmediatos</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits Section */}
+        <section id="beneficios" className="bg-white text-primary py-20">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                <Zap className="h-4 w-4 text-primary" />
+                Beneficios Empresariales
+              </div>
+              <h2 className="text-4xl font-bold mb-4">Transforma tu empresa con IA</h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Potencia a tus empleados con automatizaciones inteligentes que liberan tiempo para tareas estratégicas
               </p>
-              <div className="mb-6">
-                <LeadForm variant="compact" ctaText="Quiero mi demo" />
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-colors duration-300">
+                  <CardHeader className="text-center p-8">
+                    <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Clock className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl mb-3">Implementación Rápida</CardTitle>
+                    <CardDescription className="text-base">
+                      Automatizaciones listas en minutos. Reduce el tiempo de implementación de semanas a horas.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
-              <ul className="grid sm:grid-cols-2 gap-3 text-sm">
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Sin código</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> JSON listo para n8n</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Optimizado por IA</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Soporte incluido</li>
-              </ul>
+
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-colors duration-300">
+                  <CardHeader className="text-center p-8">
+                    <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-colors duration-300">
+                      <Users className="h-8 w-8 text-accent" />
+                    </div>
+                    <CardTitle className="text-xl mb-3">Equipos Más Eficientes</CardTitle>
+                    <CardDescription className="text-base">
+                      Libera a tus empleados de tareas repetitivas para que se enfoquen en innovación y crecimiento.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-colors duration-300">
+                  <CardHeader className="text-center p-8">
+                    <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Brain className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl mb-3">IA Multi-Modelo</CardTitle>
+                    <CardDescription className="text-base">
+                      Combinamos ChatGPT, Claude y DeepSeek para obtener los mejores resultados en cada proceso.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-colors duration-300">
+                  <CardHeader className="text-center p-8">
+                    <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-colors duration-300">
+                      <Shield className="h-8 w-8 text-accent" />
+                    </div>
+                    <CardTitle className="text-xl mb-3">Soporte Especializado</CardTitle>
+                    <CardDescription className="text-base">
+                      Acompañamiento completo desde la implementación hasta la optimización continua.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
             </div>
 
-            <div id="hero-form" className="bg-card border rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Solicita tu demo gratuita</h2>
-              <p className="text-sm text-muted-foreground mb-4">Déjanos tus datos y te contactamos en menos de 24h.</p>
-              <LeadForm ctaText="Solicitar automatización" />
-            </div>
-          </div>
-        </section>
-
-        {/* Beneficios */}
-        <section id="beneficios" className="bg-muted/50 py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-10">Beneficios clave</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Automatizaciones en minutos</CardTitle>
-                  <CardDescription>Acelera la entrega con flujos listos para usar.</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5 text-primary" /> Sin necesidad de programar</CardTitle>
-                  <CardDescription>Configura y usa sin escribir código.</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Upload className="h-5 w-5 text-primary" /> Compatible con n8n</CardTitle>
-                  <CardDescription>Exportamos JSON válido y optimizado.</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /> Soporte y mantenimiento</CardTitle>
-                  <CardDescription>Te acompañamos en la puesta en marcha.</CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Cómo funciona */}
-        <section id="como-funciona" className="py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-10">Cómo funciona</h2>
-            <div className="flex justify-center">
-              <img 
-                src="/lovable-uploads/d243776c-df5d-4936-a5c1-619630332a84.png" 
-                alt="Proceso de automatización: 1. Pides la automatización, 2. La IA la diseña, 3. La optimizamos, 4. Importamos la automatización"
-                className="max-w-full h-auto rounded-lg shadow-lg"
-                loading="lazy"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Casos de uso */}
-        <section id="casos" className="bg-muted/50 py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-10">Casos de uso</h2>
-            <div className="bg-background rounded-lg p-6 md:p-8 border">
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-primary">E-commerce</h3>
-                  <ul className="space-y-4 text-sm">
-                    <li className="flex items-start gap-3"><Clock className="h-5 w-5 text-primary mt-0.5" /> Seguimiento de pedidos y notificaciones</li>
-                    <li className="flex items-start gap-3"><Database className="h-5 w-5 text-primary mt-0.5" /> Gestión de devoluciones e inventario</li>
-                    <li className="flex items-start gap-3"><Mail className="h-5 w-5 text-primary mt-0.5" /> Recuperación de carritos abandonados</li>
-                  </ul>
-                </div>
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-primary">Servicios profesionales</h3>
-                  <ul className="space-y-4 text-sm">
-                    <li className="flex items-start gap-3"><Calendar className="h-5 w-5 text-primary mt-0.5" /> Programación inteligente de citas</li>
-                    <li className="flex items-start gap-3"><FileText className="h-5 w-5 text-primary mt-0.5" /> Generación de propuestas y contratos</li>
-                    <li className="flex items-start gap-3"><Shield className="h-5 w-5 text-primary mt-0.5" /> Seguimiento de facturas y cobros</li>
-                  </ul>
-                </div>
+            {/* Stats Section */}
+            <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary mb-2">80%</div>
+                <p className="text-muted-foreground">Reducción en tareas repetitivas</p>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-accent mb-2">24/7</div>
+                <p className="text-muted-foreground">Operación continua</p>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary mb-2">15min</div>
+                <p className="text-muted-foreground">Implementación promedio</p>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-accent mb-2">100+</div>
+                <p className="text-muted-foreground">Empresas automatizadas</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Logos de tecnologías */}
-        <section className="py-10">
+        {/* How It Works */}
+        <section id="como-funciona" className="bg-gradient-to-br from-primary/5 to-accent/5 py-20">
           <div className="container mx-auto px-4">
-            <div className="flex flex-wrap items-center justify-center gap-8 opacity-80">
-              <img src="/images/logos/openai.png" alt="Logo OpenAI" className="h-8" loading="lazy" />
-              <img src="/images/logos/n8n.png" alt="Logo n8n" className="h-8" loading="lazy" />
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                <Workflow className="h-4 w-4 text-primary" />
+                Proceso Inteligente
+              </div>
+              <h2 className="text-4xl font-bold mb-4 text-primary">Cómo automatizamos tu empresa</h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Proceso optimizado con IA para crear automatizaciones empresariales en tiempo récord
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-4 gap-8">
+              <div className="text-center group">
+                <div className="bg-primary/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors duration-300">
+                  <div className="bg-primary text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold">1</div>
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-primary">Consulta Inicial</h3>
+                <p className="text-muted-foreground">Nuestro consultor IA analiza tus procesos y define los objetivos de automatización</p>
+              </div>
+
+              <div className="text-center group">
+                <div className="bg-accent/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:bg-accent/20 transition-colors duration-300">
+                  <div className="bg-accent text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold">2</div>
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-accent">Diseño con IA</h3>
+                <p className="text-muted-foreground">ChatGPT, Claude y DeepSeek crean colaborativamente la solución óptima</p>
+              </div>
+
+              <div className="text-center group">
+                <div className="bg-primary/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors duration-300">
+                  <div className="bg-primary text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold">3</div>
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-primary">Optimización</h3>
+                <p className="text-muted-foreground">Refinamos y probamos cada flujo para máxima eficiencia y confiabilidad</p>
+              </div>
+
+              <div className="text-center group">
+                <div className="bg-accent/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:bg-accent/20 transition-colors duration-300">
+                  <div className="bg-accent text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold">4</div>
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-accent">Implementación</h3>
+                <p className="text-muted-foreground">Entregamos JSON listo para n8n y acompañamos la puesta en marcha</p>
+              </div>
+            </div>
+
+            <div className="mt-16 text-center">
+              <div className="bg-white/50 backdrop-blur-sm border border-primary/20 rounded-3xl p-8 inline-block">
+                <div className="flex items-center gap-4 text-lg font-semibold text-primary">
+                  <Clock className="h-6 w-6" />
+                  Tiempo promedio: 15-30 minutos
+                  <ArrowRight className="h-6 w-6 text-accent" />
+                  <Target className="h-6 w-6" />
+                  Resultado: Automatización funcional
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Testimonios */}
+        {/* Use Cases */}
+        <section id="casos" className="bg-white py-20">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                <Target className="h-4 w-4 text-primary" />
+                Casos de Éxito
+              </div>
+              <h2 className="text-4xl font-bold mb-4 text-primary">Automatizaciones que transforman empresas</h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Descubre cómo nuestros agentes de IA optimizan operaciones en diferentes sectores
+              </p>
+            </div>
+            
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* E-commerce */}
+              <div className="group">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-xl">
+                  <CardHeader className="p-8">
+                    <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Database className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl mb-4 text-primary">E-commerce</CardTitle>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-accent/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Seguimiento automático</p>
+                          <p className="text-sm text-muted-foreground">Notificaciones inteligentes de pedidos y envíos</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-accent/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Gestión de inventario</p>
+                          <p className="text-sm text-muted-foreground">Control automático de stock y reposición</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-accent/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Recuperación de carritos</p>
+                          <p className="text-sm text-muted-foreground">Campañas automáticas personalizadas</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </div>
+
+              {/* Servicios Profesionales */}
+              <div className="group">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-xl">
+                  <CardHeader className="p-8">
+                    <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors duration-300">
+                      <Users className="h-8 w-8 text-accent" />
+                    </div>
+                    <CardTitle className="text-2xl mb-4 text-accent">Servicios Profesionales</CardTitle>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Programación inteligente</p>
+                          <p className="text-sm text-muted-foreground">Optimización automática de calendarios</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Generación de documentos</p>
+                          <p className="text-sm text-muted-foreground">Propuestas y contratos automáticos</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Seguimiento financiero</p>
+                          <p className="text-sm text-muted-foreground">Control automático de facturas y cobros</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </div>
+
+              {/* RRHH y Operaciones */}
+              <div className="group">
+                <Card className="h-full border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-xl">
+                  <CardHeader className="p-8">
+                    <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Workflow className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl mb-4 text-primary">RRHH y Operaciones</CardTitle>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-accent/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Onboarding automático</p>
+                          <p className="text-sm text-muted-foreground">Integración perfecta de nuevos empleados</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-accent/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Evaluaciones inteligentes</p>
+                          <p className="text-sm text-muted-foreground">Análisis automático de rendimiento</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-accent/20 p-1 rounded-full mt-1">
+                          <CheckCircle className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Gestión de procesos</p>
+                          <p className="text-sm text-muted-foreground">Optimización de flujos operativos</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
         <section className="bg-muted/50 py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-10">Lo que dicen nuestros clientes</h2>
