@@ -22,11 +22,11 @@ async function sendWorkflowEmail(workflowJson: any, userEmail: string, userPhone
   }
 
   // Your company emails - you can change these to your real emails
-  const companyEmails = ['admin@precensus.com', 'team@precensus.com'];
+  const companyEmails = ['admin@fluix.com', 'team@fluix.com'];
   
   const msg = {
     to: companyEmails,
-    from: 'noreply@precensus.com', // You'll need to verify this email in SendGrid
+    from: 'noreply@fluix.com', // You'll need to verify this email in SendGrid
     subject: `Nueva automatización generada - Cliente: ${userEmail}`,
     text: `Se ha generado una nueva automatización para el cliente:
 
@@ -48,7 +48,7 @@ El archivo JSON está adjunto como attachment.`,
       <p>El archivo JSON de la automatización está adjunto.</p>
       
       <hr>
-      <p><em>Este email fue generado automáticamente por Precensus AI</em></p>
+      <p><em>Este email fue generado automáticamente por Fluix AI</em></p>
     `,
     attachments: [
       {
@@ -336,39 +336,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Check if we have complete information to create workflow
-  const hasCompleteInformation = (conversationHistory: string): boolean => {
+  // New intelligent automation detection that follows the 3-step process
+  const hasCompleteAutomationInfo = (conversationHistory: string): boolean => {
     const conversation = conversationHistory.toLowerCase();
     
-    // Required information checklist
-    const requirements = {
-      communicationTool: ['whatsapp', 'telegram', 'email', 'sms', 'slack', 'discord'],
-      platform: ['facebook', 'instagram', 'linkedin', 'website', 'web', 'landing', 'ecommerce', 'tienda'],
-      storage: ['google drive', 'dropbox', 'servidor', 'base de datos', 'excel', 'sheets', 'csv'],
-      businessProcess: ['ventas', 'leads', 'clientes', 'contactos', 'pedidos', 'reservas', 'citas', 'consultas'],
-      specificAction: ['enviar', 'guardar', 'notificar', 'procesar', 'validar', 'responder']
+    // Step 1: Check if we have comprehensive business information
+    const businessInfoKeywords = [
+      'empresa', 'negocio', 'compañía', 'industria', 'sector', 'mercado',
+      'clientes', 'productos', 'servicios', 'ventas', 'marketing', 
+      'procesos', 'operaciones', 'equipo', 'personal', 'departamento'
+    ];
+    const hasBusinessInfo = businessInfoKeywords.filter(keyword => 
+      conversation.includes(keyword)
+    ).length >= 4; // Need at least 4 business context keywords
+
+    // Step 2: Check if we have agent/automation proposal and client approval
+    const proposalKeywords = [
+      'propongo', 'recomiendo', 'sugiero', 'podríamos crear', 'te ayudo a',
+      'automatización', 'agente', 'workflow', 'proceso automático'
+    ];
+    const approvalKeywords = [
+      'acepto', 'perfecto', 'genial', 'sí', 'adelante', 'hazlo', 
+      'me gusta', 'aprovado', 'correcto', 'eso es lo que necesito',
+      'exactamente', 'perfecto', 'créalo', 'procede'
+    ];
+    const hasProposal = proposalKeywords.some(keyword => conversation.includes(keyword));
+    const hasApproval = approvalKeywords.some(keyword => conversation.includes(keyword));
+
+    // Step 3: Check if we have specific configuration details and tools
+    const toolsConfig = {
+      communication: ['whatsapp', 'telegram', 'email', 'sms', 'slack', 'discord'],
+      platforms: ['facebook', 'instagram', 'linkedin', 'website', 'shopify', 'woocommerce'],
+      storage: ['google drive', 'dropbox', 'sheets', 'excel', 'base de datos', 'notion'],
+      integrations: ['api', 'webhook', 'zapier', 'n8n', 'integración']
     };
     
-    // Check if at least 3 out of 5 categories have been mentioned
-    let categoriesMentioned = 0;
-    
-    for (const [category, keywords] of Object.entries(requirements)) {
-      if (keywords.some(keyword => conversation.includes(keyword))) {
-        categoriesMentioned++;
+    let configuredToolsCount = 0;
+    for (const [category, tools] of Object.entries(toolsConfig)) {
+      if (tools.some(tool => conversation.includes(tool))) {
+        configuredToolsCount++;
       }
     }
-    
-    // Also check if specific tools or detailed processes are mentioned
-    const hasSpecificTools = conversation.includes('n8n') || 
-                            conversation.includes('zapier') || 
-                            conversation.includes('integración') ||
-                            conversation.includes('api');
-    
-    const hasDetailedProcess = conversation.length > 200 && // Conversation has substantial content
-                              (conversation.includes('cuando') || conversation.includes('si') || 
-                               conversation.includes('entonces') || conversation.includes('después'));
-    
-    // Return true only if we have enough categories AND (specific tools OR detailed process)
-    return categoriesMentioned >= 3 && (hasSpecificTools || hasDetailedProcess);
+
+    // Advanced detection: check for specific configuration details
+    const hasSpecificConfig = conversation.includes('cuando') && 
+                             conversation.includes('entonces') &&
+                             (conversation.includes('enviar') || conversation.includes('guardar') || 
+                              conversation.includes('notificar') || conversation.includes('procesar'));
+
+    // All 3 steps must be completed:
+    // 1. Business information comprehensive
+    // 2. Proposal made and approved by client  
+    // 3. Tools and configuration specified (at least 2 tool categories + specific config)
+    return hasBusinessInfo && 
+           hasProposal && 
+           hasApproval && 
+           configuredToolsCount >= 2 && 
+           hasSpecificConfig;
   };
 
   // Multi-AI workflow orchestration
@@ -642,23 +666,17 @@ IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.
         // Get conversation history to check if we have complete information
         const fullConversation = conversationHistory.map(msg => msg.content).join(' ') + ' ' + message;
         
-        if (hasCompleteInformation(fullConversation)) {
+        if (hasCompleteAutomationInfo(fullConversation)) {
           // We have enough information, show the create button
-          const response = `🎯 **¡Perfecto!** Ya tengo toda la información necesaria para crear tu automatización personalizada.
+          const response = `🎯 **¡Excelente!** He completado los 3 pasos necesarios para crear tu automatización:
 
-📋 **He detectado en nuestra conversación:**
-- Herramientas de comunicación especificadas ✅
-- Plataformas de integración definidas ✅  
-- Proceso de negocio claro ✅
-- Acciones específicas identificadas ✅
+✅ **Paso 1 - Información empresarial:** Tengo clara la información sobre tu empresa y procesos
+✅ **Paso 2 - Propuesta aprobada:** Has aprobado la automatización que te he propuesto
+✅ **Paso 3 - Configuración técnica:** Tienes especificadas las herramientas y configuraciones necesarias
 
-🤖 **Sistema Multi-IA listo para procesar:**
-1. **ChatGPT Planner** → Análisis y planificación inicial
-2. **Claude Refiner** → Optimización y manejo de errores  
-3. **DeepSeek Optimizer** → Rendimiento y escalabilidad
-4. **N8N Assistant** → Generación del JSON final
+🚀 **Todo está listo para crear tu automatización personalizada**
 
-¡Ahora puedes crear tu automatización completa!`;
+El sistema procederá con la generación automática usando múltiples IAs especializadas (ChatGPT → Claude → DeepSeek → N8N) para obtener el mejor resultado posible.`;
           
           // Save AI response
           if (user && sessionId !== 'landing-page-chat') {

@@ -582,7 +582,7 @@ Hemos generado tu workflow personalizado usando nuestro sistema de 4 IAs especia
 
 **¡En breve nos pondremos en contacto contigo!**
 
-Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
+Gracias por confiar en Fluix AI para automatizar tu negocio. 🚀`,
           sender: "ai",
           created_at: new Date().toISOString()
         };
@@ -630,7 +630,7 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
               <Bot className="h-10 w-10 text-primary" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold mb-2">¡Bienvenido a Precensus AI!</h2>
+              <h2 className="text-2xl font-bold mb-2">¡Bienvenido a Fluix AI!</h2>
               <p className="text-muted-foreground">
                 Tu asistente de automatización inteligente está listo para ayudarte. 
                 Crea una nueva conversación para comenzar.
@@ -785,19 +785,32 @@ Gracias por confiar en Precensus AI para automatizar tu negocio. 🚀`,
 
       {/* Bottom Section - Fixed at bottom */}
       <div className="flex-shrink-0">
-        {/* Create Automation Button */}
+        {/* Intelligent Create Automation Button */}
         {showCreateButton && !showContactForm && !isCreatingAutomation && (
-          <div className="border-t bg-primary/5 p-6">
+          <div className="border-t bg-gradient-to-r from-primary/10 to-accent/10 p-6">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border">
-                <h3 className="text-xl font-semibold mb-2">🤖 ¡Listo para crear tu automatización!</h3>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-primary/20">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-green-600">Los 3 pasos están completos</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  🚀 ¡Crear Automatización Inteligente!
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  Nuestro sistema de 4 IAs especializadas generará tu workflow personalizado
+                  Sistema Multi-IA activado. ChatGPT → Claude → DeepSeek → N8N
                 </p>
-                <Button onClick={handleCreateAutomation} size="lg" className="w-full sm:w-auto">
-                  <Bot className="h-5 w-5 mr-2" />
-                  Crear Automatización
+                <Button 
+                  onClick={handleCreateAutomation} 
+                  size="lg" 
+                  className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300 transform hover:scale-105"
+                >
+                  <Zap className="h-5 w-5 mr-2" />
+                  Iniciar Creación Automática
                 </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Proceso automático sin intervención manual
+                </p>
               </div>
             </div>
           </div>
