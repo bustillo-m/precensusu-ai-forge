@@ -855,7 +855,7 @@ Siempre responde en español y enfócate en soluciones de automatización reales
 
       // Check if user has provided enough information and we should show create button
       const fullConversation = conversationHistory.map(msg => msg.content).join(' ') + ' ' + message + ' ' + aiResponse;
-      const shouldShowButton = hasCompleteInformation(fullConversation);
+      const shouldShowButton = hasCompleteAutomationInfo(fullConversation);
 
       res.json({ 
         response: aiResponse, 
