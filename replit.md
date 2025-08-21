@@ -2,10 +2,14 @@
 
 ## Overview
 
-This is a full-stack AI automation platform called "Precensusu AI" that enables users to create and manage automated workflows using conversational AI. The application has been successfully migrated from Lovable/Supabase to Replit with local PostgreSQL. It features intelligent workflow generation through multi-AI orchestration (OpenAI → Claude → DeepSeek → N8N JSON output) and provides both anonymous consultation chat and authenticated user sessions with persistent workflow storage.
+This is a full-stack AI automation platform called "Fluix AI" that enables users to create and manage automated workflows using conversational AI. The application has been successfully migrated from Lovable/Supabase to Replit with local PostgreSQL. It features intelligent workflow generation through multi-AI orchestration (OpenAI → Claude → DeepSeek → N8N JSON output) and provides both anonymous consultation chat and authenticated user sessions with persistent workflow storage.
 
-## Recent Changes (December 2024)
+## Recent Changes (August 2025)
 
+- **Brand Update**: Changed from "Precensusu AI" to "Fluix AI" across all application components
+- **UI Modernization**: Implemented futuristic design with gradient backgrounds and smooth animations
+- **Logo Integration**: Successfully integrated new company logo throughout the interface
+- **Color Palette**: Applied new brand colors (blue #1E3A8A, violet #6D28D9, white #F9FAFB)
 - **Migration Complete**: Successfully migrated from Supabase to local PostgreSQL with Drizzle ORM
 - **Multi-AI Workflow Generation**: Implemented intelligent workflow creation with phrase detection
 - **Smart Tool Selection**: AI now asks for specific tools (WhatsApp, platforms, storage) when creating agents

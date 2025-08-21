@@ -1,22 +1,22 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Clock, Code, Upload, Shield, Mail, Calendar, Database, FileText, Bot, Zap, Users, Cpu, Workflow, Brain, Target, ArrowRight } from "lucide-react";
+import { CheckCircle, Clock, Code, Upload, Shield, Mail, Calendar, Database, FileText, Bot, Zap, Users, Cpu, Workflow, Brain, Target, ArrowRight, Rocket, MessageCircle, Cog } from "lucide-react";
 import { LeadForm } from "@/components/LeadForm";
 import { AutomationForm } from "@/components/AutomationForm";
 import logoImage from "@/assets/Captura_de_pantalla_2025-08-21_120039-removebg-preview.png";
 
 export default function Index() {
   useEffect(() => {
-    document.title = "Precensusu AI — Automatiza procesos con IA";
+    document.title = "Fluix AI — Automatiza procesos con IA";
     // Structured data
     const ld = document.createElement("script");
     ld.type = "application/ld+json";
     ld.innerHTML = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Organization",
-      name: "Precensusu AI",
-      url: "https://precensusu.ai/",
+      name: "Fluix AI",
+      url: "https://fluix.ai/",
       sameAs: ["https://www.linkedin.com", "https://www.tiktok.com"],
       slogan: "Automatiza procesos con agentes de IA sin código",
     });
@@ -32,11 +32,11 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <img 
               src={logoImage} 
-              alt="Precensusu AI Logo" 
+              alt="Fluix AI Logo" 
               className="h-10 w-auto"
             />
             <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-              Precensusu AI
+              Fluix AI
             </span>
           </div>
           <nav className="hidden md:flex space-x-8">
@@ -483,27 +483,54 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Planes */}
-        <section id="precios" className="py-16">
+        {/* Getting Started */}
+        <section id="precios" className="py-20 bg-gradient-to-br from-accent/5 to-primary/10">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-10">Cómo empezar</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>1. Consultoría IA gratuita</CardTitle>
-                  <CardDescription>Evaluamos tus procesos y definimos el alcance.</CardDescription>
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                <Rocket className="h-4 w-4 text-accent" />
+                Proceso de Implementación
+              </div>
+              <h2 className="text-4xl font-bold mb-4 text-primary">Cómo empezar con Fluix AI</h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Un proceso simple y estructurado para transformar tu empresa con automatizaciones inteligentes
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:scale-105">
+                <CardHeader className="p-8 text-center">
+                  <div className="bg-primary/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <MessageCircle className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl mb-3">1. Consultoría IA gratuita</CardTitle>
+                  <CardDescription className="text-base">
+                    Analizamos tus procesos actuales, identificamos oportunidades de automatización y definimos el alcance del proyecto sin costo.
+                  </CardDescription>
                 </CardHeader>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>2. Entrega de agentes/automatizaciones</CardTitle>
-                  <CardDescription>Paquetes mensuales con soporte.</CardDescription>
+
+              <Card className="border-accent/20 hover:border-accent/40 transition-all duration-300 hover:shadow-lg hover:scale-105">
+                <CardHeader className="p-8 text-center">
+                  <div className="bg-accent/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Cog className="h-8 w-8 text-accent" />
+                  </div>
+                  <CardTitle className="text-xl mb-3">2. Desarrollo e implementación</CardTitle>
+                  <CardDescription className="text-base">
+                    Creamos agentes de IA personalizados y automatizaciones con paquetes mensuales que incluyen soporte continuo y optimizaciones.
+                  </CardDescription>
                 </CardHeader>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>3. Planes personalizados</CardTitle>
-                  <CardDescription>Adaptamos la propuesta a tu empresa.</CardDescription>
+
+              <Card className="border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:scale-105">
+                <CardHeader className="p-8 text-center">
+                  <div className="bg-primary/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Target className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl mb-3">3. Escalamiento empresarial</CardTitle>
+                  <CardDescription className="text-base">
+                    Planes personalizados que se adaptan al crecimiento de tu empresa con soluciones escalables y soporte prioritario.
+                  </CardDescription>
                 </CardHeader>
               </Card>
             </div>
@@ -538,7 +565,7 @@ export default function Index() {
       <footer className="border-t py-12">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <span className="text-xl font-bold font-playfair">Precensusu AI</span>
+            <span className="text-xl font-bold font-playfair">Fluix AI</span>
           </div>
           <p className="text-muted-foreground mb-4">Automatizaciones con IA para cualquier negocio</p>
           <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
