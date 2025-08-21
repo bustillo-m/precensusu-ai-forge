@@ -363,9 +363,7 @@ El workflow ha sido guardado y está listo para usar.`,
 
     // Extract business information from user message
     const newBusinessData = { ...businessData };
-    if (newMessage.toLowerCase().includes('empresa') || newMessage.toLowerCase().includes('negocio')) {
-      newBusinessData.description = newMessage;
-    }
+    
     setBusinessData(newBusinessData);
 
     // Generate AI response
