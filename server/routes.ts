@@ -24,7 +24,8 @@ async function sendWorkflowEmail(workflowJson: any, userEmail: string, userPhone
   // Your company emails - you can change these to your real emails
   const companyEmails = ['admin@fluix.com', 'team@fluix.com'];
   
-  const msg = {
+  // Email to company
+  const companyMsg = {
     to: companyEmails,
     from: 'noreply@fluix.com', // You'll need to verify this email in SendGrid
     subject: `Nueva automatización generada - Cliente: ${userEmail}`,
@@ -60,9 +61,69 @@ El archivo JSON está adjunto como attachment.`,
     ]
   };
 
+  // Email to user
+  const userMsg = {
+    to: userEmail,
+    from: 'noreply@fluix.com',
+    subject: '🤖 Tu automatización personalizada está lista - Fluix AI',
+    text: `¡Hola!
+
+Tu automatización personalizada ha sido creada exitosamente basada en la información que nos proporcionaste.
+
+Nuestro equipo revisará la automatización y te contactaremos pronto para coordinar la implementación.
+
+Datos de tu solicitud:
+- Email: ${userEmail}
+- Teléfono: ${userPhone}
+
+El archivo de automatización está adjunto para tu revisión.
+
+¡Gracias por confiar en Fluix AI!
+
+Saludos,
+Equipo Fluix AI`,
+    html: `
+      <h2 style="color: #1E3A8A;">🤖 Tu automatización está lista</h2>
+      <p>¡Hola!</p>
+      
+      <p>Tu automatización personalizada ha sido <strong>creada exitosamente</strong> basada en la información que nos proporcionaste.</p>
+      
+      <p>Nuestro equipo revisará la automatización y <strong>te contactaremos pronto</strong> para coordinar la implementación.</p>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3>📋 Datos de tu solicitud:</h3>
+        <p><strong>Email:</strong> ${userEmail}</p>
+        <p><strong>Teléfono:</strong> ${userPhone}</p>
+      </div>
+      
+      <p>El archivo de automatización está adjunto para tu revisión.</p>
+      
+      <p>¡Gracias por confiar en <strong>Fluix AI</strong>! 🚀</p>
+      
+      <hr style="margin: 30px 0;">
+      <p style="color: #6b7280; font-size: 12px;">
+        <em>Este email fue generado automáticamente por Fluix AI</em><br>
+        Si tienes alguna pregunta, no dudes en contactarnos.
+      </p>
+    `,
+    attachments: [
+      {
+        content: Buffer.from(JSON.stringify(workflowJson, null, 2)).toString('base64'),
+        filename: `automatizacion-${Date.now()}.json`,
+        type: 'application/json',
+        disposition: 'attachment'
+      }
+    ]
+  };
+
   try {
-    await sgMail.send(msg);
-    console.log('Workflow email sent successfully');
+    // Send email to company
+    await sgMail.send(companyMsg);
+    console.log('Company workflow email sent successfully');
+    
+    // Send email to user
+    await sgMail.send(userMsg);
+    console.log('User workflow email sent successfully to:', userEmail);
   } catch (error) {
     console.error('Error sending workflow email:', error);
   }
