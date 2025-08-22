@@ -601,8 +601,14 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
       <div className="absolute bottom-0 left-0 right-0 bg-background/98 backdrop-blur-md border-t p-4">
         <div className="flex gap-2 max-w-4xl mx-auto mb-3">
           <Button
-            onClick={createAutomation}
-            disabled={loading || !newMessage.trim()}
+            onClick={() => {
+              const email = prompt("Ingresa tu email para recibir la automatización:");
+              const phone = prompt("Ingresa tu teléfono para contacto:");
+              if (email && phone) {
+                createAutomation({ email, phone });
+              }
+            }}
+            disabled={loading}
             size="sm"
             variant="outline"
             className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
