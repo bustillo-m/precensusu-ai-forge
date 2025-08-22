@@ -22,12 +22,12 @@ async function sendWorkflowEmail(workflowJson: any, userEmail: string, userPhone
   }
 
   // Your company emails - you can change these to your real emails
-  const companyEmails = ['admin@fluix.com', 'team@fluix.com'];
+  const companyEmails = ['bustillo.mateo27@gmail.com'];
   
   // Email to company
   const companyMsg = {
     to: companyEmails,
-    from: 'noreply@fluix.com', // You'll need to verify this email in SendGrid
+    from: 'bustillo.mateo27@gmail.com', // Using verified sender email
     subject: `Nueva automatización generada - Cliente: ${userEmail}`,
     text: `Se ha generado una nueva automatización para el cliente:
 
@@ -64,7 +64,7 @@ El archivo JSON está adjunto como attachment.`,
   // Email to user
   const userMsg = {
     to: userEmail,
-    from: 'noreply@fluix.com',
+    from: 'bustillo.mateo27@gmail.com',
     subject: '🤖 Tu automatización personalizada está lista - Fluix AI',
     text: `¡Hola!
 
