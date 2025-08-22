@@ -95,6 +95,7 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
       }));
 
       setMessages(transformedMessages);
+      scrollToBottom();
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -193,13 +194,20 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   };
 
   const askNextQuestion = async (sessionId: string) => {
-    if (currentQuestion >= discoveryQuestions.length) {
+    console.log('askNextQuestion called with currentQuestion:', currentQuestion, 'total:', discoveryQuestions.length);
+    await askNextQuestionByIndex(sessionId, currentQuestion);
+  };
+
+  const askNextQuestionByIndex = async (sessionId: string, questionIndex: number) => {
+    console.log('askNextQuestionByIndex called with questionIndex:', questionIndex, 'total:', discoveryQuestions.length);
+    if (questionIndex >= discoveryQuestions.length) {
       // All questions completed, trigger automation creation
+      console.log('All questions completed, triggering automation creation');
       await triggerAutomationCreation(sessionId);
       return;
     }
 
-    const question = discoveryQuestions[currentQuestion];
+    const question = discoveryQuestions[questionIndex];
     const aiMessage: Message = {
       id: Date.now().toString(),
       content: question.text,
@@ -212,6 +220,7 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
     const savedMessage = await saveMessage(aiMessage);
     if (savedMessage) {
       setMessages(prev => [...prev, savedMessage]);
+      setTimeout(scrollToBottom, 100);
     }
     
     setAwaitingResponse(true);
@@ -238,6 +247,7 @@ Ahora voy a crear tu automatización personalizada utilizando nuestro sistema de
     const savedMessage = await saveMessage(aiMessage);
     if (savedMessage) {
       setMessages(prev => [...prev, savedMessage]);
+      setTimeout(scrollToBottom, 100);
     }
 
     // Trigger the multi-AI automation creation
@@ -293,6 +303,7 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
       const savedMessage = await saveMessage(successMessage);
       if (savedMessage) {
         setMessages(prev => [...prev, savedMessage]);
+        setTimeout(scrollToBottom, 100);
       }
 
       toast({
@@ -312,6 +323,7 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
       const savedErrorMessage = await saveMessage(errorMessage);
       if (savedErrorMessage) {
         setMessages(prev => [...prev, savedErrorMessage]);
+        setTimeout(scrollToBottom, 100);
       }
 
       toast({
@@ -348,6 +360,7 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
     const savedUserMessage = await saveMessage(userMessage);
     if (savedUserMessage) {
       setMessages(prev => [...prev, savedUserMessage]);
+      setTimeout(scrollToBottom, 100);
     }
 
     setNewMessage("");
@@ -372,12 +385,15 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
         setBusinessData(updatedData);
         
         // Move to next question
-        setCurrentQuestion(prev => prev + 1);
+        const nextQuestionIndex = currentQuestion + 1;
+        setCurrentQuestion(nextQuestionIndex);
         setAwaitingResponse(false);
         
         // Ask next question or complete the flow
         setTimeout(async () => {
-          await askNextQuestion(sessionId);
+          // Debug log
+          console.log('About to ask next question. nextQuestionIndex:', nextQuestionIndex, 'total questions:', discoveryQuestions.length);
+          await askNextQuestionByIndex(sessionId, nextQuestionIndex);
           setLoading(false);
         }, 1000);
       } else {
@@ -394,6 +410,7 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
         const savedFollowUp = await saveMessage(followUpMessage);
         if (savedFollowUp) {
           setMessages(prev => [...prev, savedFollowUp]);
+          setTimeout(scrollToBottom, 100);
         }
         setLoading(false);
       }
@@ -410,6 +427,7 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
       const savedResponse = await saveMessage(generalResponse);
       if (savedResponse) {
         setMessages(prev => [...prev, savedResponse]);
+        setTimeout(scrollToBottom, 100);
       }
       setLoading(false);
     }
@@ -502,7 +520,7 @@ El archivo JSON de la automatización ha sido enviado a nuestro equipo para revi
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 mb-32 relative">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 mb-32 relative max-h-[calc(100vh-200px)]">
         {messages.length === 0 && (
           <div className="text-center py-8">
             <Bot className="h-12 w-12 text-primary mx-auto mb-4" />
