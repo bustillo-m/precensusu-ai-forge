@@ -1,0 +1,15 @@
+Necesito modificar el flujo de consultoría empresarial en `BusinessChatArea.tsx` y cualquier otro archivo relacionado para que funcione de la siguiente manera:
+
+1. **Recopilar datos de la empresa antes de hablar de automatización.** Al iniciar el chat no preguntes qué agente o flujo quieren. Entra en modo *descubrimiento* y formula preguntas para entender a qué se dedica el negocio: nombre y sector, procesos clave, puntos de dolor, etc. (puedes usar un array de preguntas o generar preguntas relevantes según las respuestas). Continúa con preguntas de seguimiento hasta que tengas una descripción clara del negocio y cómo podrías ayudarlo con IA.
+
+2. **Proponer automatizaciones o agentes.** Tras recopilar la información del negocio (campo `businessData` con 3 o más claves rellenadas), genera una respuesta donde sugieres varias automatizaciones o agentes de IA adecuados para ahorrar tiempo y dinero en ese negocio. Usa `generateAgentProposals` o un mensaje que explique brevemente cada opción. Cambia la fase a `proposal` y muestra estos agentes al usuario para que elija.
+
+3. **Ejecución del flujo multi‑IA.** Cuando el usuario acepte una de las propuestas (por ejemplo, escriba "Sí" o haga clic en una tarjeta), activa `triggerAutomationCreation` / `createAutomationFlow` para generar la automatización con el pipeline ChatGPT → Claude → DeepSeek → N8n Assistant, sin preguntas adicionales sobre bases de datos ni herramientas.
+
+4. **Detección de peticiones claras.** Si en cualquier momento el usuario pide explícitamente automatizar una tarea concreta (verbo "automatizar" o "crear agente" seguido de un proceso claro), y aporta suficientes detalles en su mensaje, entonces salta directamente a la creación del flujo multi‑IA sin pasar por modo descubrimiento. Puedes reutilizar `detectAutomationKeywords` pero añade una condición que compruebe que el mensaje incluye un proceso o tarea concreta (por ejemplo, contiene más de 4 palabras o incluye palabras que no sean genéricas). Si la petición es ambigua o incompleta, responde con que necesitas conocer más sobre su negocio y sigue con el modo descubrimiento.
+
+5. **Eliminar preguntas de personalización.** No vuelvas a pedir al usuario en qué base de datos o herramienta quiere guardar la automatización; elimina o comenta esas partes de código. Sólo utiliza la información del negocio y la opción seleccionada para crear el flujo.
+
+6. **Scroll y envío automático.** Asegúrate de que después de cada mensaje nuevo se llama a `scrollToBottom()` mediante `useEffect` o un `setTimeout` para mantener la entrada de texto visible. También verifica que el bot envía su respuesta después de cada pregunta sin retrasos extra.
+
+En resumen, se trata de unificar la información empresarial antes de ofrecer automatizaciones, proponer soluciones, y ejecutar el flujo multi-IA solo cuando el usuario acepta o cuando ya conoce la automatización deseada. Gracias.
