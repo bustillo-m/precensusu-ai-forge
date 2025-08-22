@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Send, Bot, User as UserIcon, Lightbulb, Target, Settings, ArrowRight, CheckCircle, Zap } from "lucide-react";
+import { Building2, Send, Bot, User as UserIcon, Lightbulb, Target, Settings, ArrowRight, CheckCircle } from "lucide-react";
 
 interface Message {
   id: string;
@@ -41,9 +41,6 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   const [currentPhase, setCurrentPhase] = useState<'discovery' | 'analysis' | 'proposal'>('discovery');
   const [businessData, setBusinessData] = useState<any>({});
   const [proposedAgents, setProposedAgents] = useState<AgentProposal[]>([]);
-  const [showCreateButton, setShowCreateButton] = useState(false);
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactData, setContactData] = useState({ email: '', phone: '' });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -171,11 +168,6 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
       if (!response.ok) throw new Error('Failed to generate AI response');
 
       const data = await response.json();
-
-      // Check if AI response suggests automation is ready
-      if (data.showCreateButton) {
-        setShowCreateButton(true);
-      }
 
       // Analyze the conversation to determine next phase
       const messageCount = messages.filter(m => m.sender === 'user').length;
@@ -436,26 +428,6 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
     await handleSend();
   };
 
-  const handleCreateAutomation = () => {
-    setShowContactForm(true);
-  };
-
-  const handleSubmitAutomation = async () => {
-    if (!contactData.email || !contactData.phone) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Por favor completa todos los campos.",
-      });
-      return;
-    }
-
-    await createAutomation(contactData);
-    setShowContactForm(false);
-    setShowCreateButton(false);
-    setContactData({ email: '', phone: '' });
-  };
-
   if (!currentChatId) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -627,81 +599,17 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
 
       {/* Fixed input area at absolute bottom */}
       <div className="absolute bottom-0 left-0 right-0 bg-background/98 backdrop-blur-md border-t p-4">
-        {/* Intelligent Create Automation Button */}
-        {showCreateButton && !showContactForm && !loading && (
-          <div className="mb-4 max-w-4xl mx-auto">
-            <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 border border-primary/20">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-600">Los 3 pasos están completos</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent text-center">
-                🚀 ¡Crear Automatización Inteligente!
-              </h3>
-              <p className="text-muted-foreground mb-4 text-center text-sm">
-                Sistema Multi-IA activado. ChatGPT → Claude → DeepSeek → N8N
-              </p>
-              <Button 
-                onClick={handleCreateAutomation} 
-                size="lg" 
-                className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300 transform hover:scale-105"
-              >
-                <Zap className="h-5 w-5 mr-2" />
-                Iniciar Creación Automática
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Proceso automático sin intervención manual
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Contact Form */}
-        {showContactForm && (
-          <div className="mb-4 max-w-md mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border">
-              <h3 className="text-lg font-semibold mb-4 text-center">📧 Datos de contacto</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <Input
-                    type="email"
-                    value={contactData.email}
-                    onChange={(e) => setContactData({...contactData, email: e.target.value})}
-                    placeholder="tu@email.com"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Teléfono</label>
-                  <Input
-                    value={contactData.phone}
-                    onChange={(e) => setContactData({...contactData, phone: e.target.value})}
-                    placeholder="+34 600 000 000"
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => setShowContactForm(false)} 
-                    variant="outline" 
-                    className="flex-1"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleSubmitAutomation}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    {loading ? 'Procesando...' : 'Crear Automatización'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        <div className="flex gap-2 max-w-4xl mx-auto mb-3">
+          <Button
+            onClick={createAutomation}
+            disabled={loading || !newMessage.trim()}
+            size="sm"
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            🤖 Crear Automatización
+          </Button>
+        </div>
         <div className="flex gap-2 max-w-4xl mx-auto">
           <Input
             value={newMessage}
