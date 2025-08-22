@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Send, Bot, User as UserIcon, Lightbulb, Target, Settings, ArrowRight, CheckCircle } from "lucide-react";
+import { Building2, Send, Bot, User as UserIcon, Lightbulb, Target, Settings, ArrowRight } from "lucide-react";
 
 interface Message {
   id: string;
@@ -27,20 +27,20 @@ interface BusinessChatAreaProps {
   onCreateChat: (title?: string) => Promise<string | null>;
 }
 
-interface AgentProposal {
-  name: string;
-  description: string;
-  benefits: string[];
-  implementation: string;
-}
 
 export function BusinessChatArea({ user, currentChatId, onCreateChat }: BusinessChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentPhase, setCurrentPhase] = useState<'discovery' | 'analysis' | 'proposal'>('discovery');
-  const [businessData, setBusinessData] = useState<any>({});
-  const [proposedAgents, setProposedAgents] = useState<AgentProposal[]>([]);
+  const [businessData, setBusinessData] = useState<{
+    company?: string;
+    process?: string;
+    tools?: string;
+    objective?: string;
+  }>({});
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [awaitingResponse, setAwaitingResponse] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -59,7 +59,8 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
       setMessages([]);
       setCurrentPhase('discovery');
       setBusinessData({});
-      setProposedAgents([]);
+      setCurrentQuestion(0);
+      setAwaitingResponse(false);
     }
   }, [currentChatId]);
 
@@ -143,100 +144,68 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   };
 
   const discoveryQuestions = [
-    "¿A qué se dedica tu empresa? ¿Cuál es tu producto o servicio principal?",
-    "¿Cuáles son los principales procesos que consumen más tiempo en tu empresa?",
-    "¿Qué tareas repetitivas realizas o tu equipo realiza diariamente?",
-    "¿Cómo gestionas actualmente la comunicación con clientes?",
-    "¿Qué herramientas o software utilizas para el trabajo diario?",
-    "¿Cuáles son los principales puntos de dolor en tus operaciones?",
-    "¿Qué objetivos de crecimiento tienes para los próximos 6 meses?"
+    {
+      text: "¿Cuál es el nombre de tu empresa y a qué se dedica?",
+      field: "company" as keyof typeof businessData,
+      followUp: "Por favor, proporciona el nombre de tu empresa y describe brevemente tu actividad comercial."
+    },
+    {
+      text: "¿Qué proceso concreto deseas automatizar? Describe brevemente los pasos actuales.",
+      field: "process" as keyof typeof businessData,
+      followUp: "Necesito más detalles sobre el proceso que quieres automatizar. ¿Podrías describir los pasos específicos?"
+    },
+    {
+      text: "¿Qué sistemas, herramientas o plataformas utilizas actualmente (CRM, ERP, etc.)?",
+      field: "tools" as keyof typeof businessData,
+      followUp: "Por favor, menciona las herramientas y sistemas específicos que utilizas en tu empresa."
+    },
+    {
+      text: "¿Cuál es el objetivo final que buscas con esta automatización?",
+      field: "objective" as keyof typeof businessData,
+      followUp: "Describe el resultado que esperas obtener con la automatización. ¿Qué problema resolverá?"
+    }
   ];
 
-  const generateAIResponse = async (userMessage: string, sessionId: string) => {
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          sessionId: sessionId
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to generate AI response');
-
-      const data = await response.json();
-
-      // Analyze the conversation to determine next phase
-      const messageCount = messages.filter(m => m.sender === 'user').length;
-      const hasBusinessInfo = Object.keys(businessData).length > 3;
-
-      if (messageCount >= 4 && hasBusinessInfo && currentPhase === 'discovery') {
-        setCurrentPhase('analysis');
-        setTimeout(() => {
-          generateAgentProposals();
-        }, 2000);
-      }
-
-      return data.response;
-    } catch (error) {
-      console.error("Error generating AI response:", error);
-      return "Lo siento, hubo un error procesando tu mensaje. ¿Podrías intentar de nuevo?";
+  const isResponseComplete = (response: string, field: keyof typeof businessData): boolean => {
+    const cleanResponse = response.trim().toLowerCase();
+    
+    // Check for minimal information requirements
+    if (cleanResponse.length < 10) return false;
+    
+    switch (field) {
+      case 'company':
+        return cleanResponse.includes('empresa') || cleanResponse.includes('compañía') || 
+               cleanResponse.includes('negocio') || cleanResponse.length > 15;
+      case 'process':
+        return cleanResponse.includes('proceso') || cleanResponse.includes('automatizar') ||
+               cleanResponse.includes('tarea') || cleanResponse.length > 20;
+      case 'tools':
+        return cleanResponse.includes('crm') || cleanResponse.includes('erp') ||
+               cleanResponse.includes('sistema') || cleanResponse.includes('herramienta') ||
+               cleanResponse.includes('software') || cleanResponse.length > 15;
+      case 'objective':
+        return cleanResponse.includes('objetivo') || cleanResponse.includes('busco') ||
+               cleanResponse.includes('quiero') || cleanResponse.includes('mejorar') ||
+               cleanResponse.length > 15;
+      default:
+        return false;
     }
   };
 
-  const generateAgentProposals = async () => {
-    // Simulated agent proposals based on business data
-    const proposals: AgentProposal[] = [
-      {
-        name: "Agente de Atención al Cliente",
-        description: "Automatización completa de respuestas a consultas frecuentes y escalación inteligente",
-        benefits: ["Respuesta 24/7", "Reducción 80% tiempo respuesta", "Escalación automática de casos complejos"],
-        implementation: "Integración con WhatsApp, email y chat web. Base de conocimiento personalizada."
-      },
-      {
-        name: "Agente de Marketing de Contenido",
-        description: "Generación automática de contenido para redes sociales y blog corporativo",
-        benefits: ["Contenido diario automatizado", "Consistencia de marca", "Aumento 60% engagement"],
-        implementation: "Calendario de publicaciones, análisis de tendencias, adaptación a cada plataforma."
-      },
-      {
-        name: "Agente de Seguimiento de Ventas",
-        description: "Automatización del proceso de seguimiento y nurturing de leads",
-        benefits: ["Seguimiento automático de leads", "Incremento 40% conversión", "CRM integrado"],
-        implementation: "Secuencias de email personalizadas, scoring de leads, reportes automáticos."
-      }
-    ];
+  const askNextQuestion = async (sessionId: string) => {
+    if (currentQuestion >= discoveryQuestions.length) {
+      // All questions completed, trigger automation creation
+      await triggerAutomationCreation(sessionId);
+      return;
+    }
 
-    setProposedAgents(proposals);
-    setCurrentPhase('proposal');
-
-    // Add proposal message
-    const proposalMessage = `Basándome en el análisis de tu empresa, he identificado las siguientes oportunidades de automatización:
-
-🎯 **Agentes IA Recomendados para tu Empresa:**
-
-${proposals.map((agent, index) => `
-**${index + 1}. ${agent.name}**
-${agent.description}
-
-✅ Beneficios:
-${agent.benefits.map(benefit => `• ${benefit}`).join('\n')}
-
-🔧 Implementación:
-${agent.implementation}
-`).join('\n---\n')}
-
-¿Te interesa que desarrollemos alguno de estos agentes específicamente para tu empresa? Puedo crear un plan detallado de implementación.`;
-
+    const question = discoveryQuestions[currentQuestion];
     const aiMessage: Message = {
       id: Date.now().toString(),
-      content: proposalMessage,
+      content: question.text,
       sender: "ai",
-      session_id: currentChatId!,
-      message_type: 'proposal',
+      session_id: sessionId,
+      message_type: 'question',
       created_at: new Date().toISOString()
     };
 
@@ -244,26 +213,44 @@ ${agent.implementation}
     if (savedMessage) {
       setMessages(prev => [...prev, savedMessage]);
     }
+    
+    setAwaitingResponse(true);
   };
 
-  const detectAutomationKeywords = (message: string) => {
-    const keywords = [
-      'crear agente', 'creame', 'automatizacion', 'automatización', 
-      'agente', 'bot', 'crear bot', 'workflow', 'proceso automatico',
-      'automatizar', 'generar agente', 'hacer agente'
-    ];
-    
-    const lowerMessage = message.toLowerCase();
-    return keywords.some(keyword => lowerMessage.includes(keyword));
+  const triggerAutomationCreation = async (sessionId: string) => {
+    const aiMessage: Message = {
+      id: Date.now().toString(),
+      content: `Perfecto! Ya tengo toda la información necesaria:
+
+🏢 **Empresa:** ${businessData.company}
+⚙️ **Proceso a automatizar:** ${businessData.process}
+🛠️ **Herramientas actuales:** ${businessData.tools}
+🎯 **Objetivo:** ${businessData.objective}
+
+Ahora voy a crear tu automatización personalizada utilizando nuestro sistema de IA avanzado. Este proceso puede tomar unos momentos...
+
+🤖 Iniciando creación de automatización...`,
+      sender: "ai",
+      session_id: sessionId,
+      created_at: new Date().toISOString()
+    };
+
+    const savedMessage = await saveMessage(aiMessage);
+    if (savedMessage) {
+      setMessages(prev => [...prev, savedMessage]);
+    }
+
+    // Trigger the multi-AI automation creation
+    setTimeout(() => {
+      createAutomationFlow(sessionId);
+    }, 2000);
   };
 
-  const createAutomation = async (contactData: { email: string; phone: string }) => {
-    if (!currentChatId) return;
-    
+  const createAutomationFlow = async (sessionId: string) => {
     setLoading(true);
     try {
       // Get conversation context from all messages
-      const conversationContext = messages.map(m => `${m.sender}: ${m.content}`).join('\n');
+      const conversationContext = `Empresa: ${businessData.company}\nProceso: ${businessData.process}\nHerramientas: ${businessData.tools}\nObjetivo: ${businessData.objective}`;
       
       const response = await fetch('/api/create-automation', {
         method: 'POST',
@@ -272,8 +259,8 @@ ${agent.implementation}
         },
         body: JSON.stringify({
           conversationContext,
-          email: contactData.email,
-          phone: contactData.phone
+          email: user.email,
+          phone: 'No proporcionado'
         }),
       });
 
@@ -287,13 +274,19 @@ ${agent.implementation}
         id: (Date.now() + 1).toString(),
         content: `🎉 ¡Automatización creada exitosamente!
 
-Te contactaremos pronto al ${contactData.phone} y enviaremos los detalles a ${contactData.email}.
+Hemos generado tu automatización personalizada basada en:
+• Tu empresa: ${businessData.company}
+• Proceso: ${businessData.process}
+• Herramientas: ${businessData.tools}
+• Objetivo: ${businessData.objective}
 
-El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
+El archivo JSON de la automatización ha sido enviado a nuestro equipo para revisión final.
+
+📧 Te contactaremos pronto a ${user.email} con los detalles de implementación.
 
 ¡Gracias por confiar en Fluix AI para automatizar tu negocio! 🚀`,
         sender: "ai",
-        session_id: currentChatId,
+        session_id: sessionId,
         created_at: new Date().toISOString()
       };
 
@@ -313,7 +306,7 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
         id: (Date.now() + 1).toString(),
         content: 'Lo siento, hubo un error al crear la automatización. Por favor, intenta de nuevo.',
         sender: "ai",
-        session_id: currentChatId!,
+        session_id: sessionId,
         created_at: new Date().toISOString()
       };
       const savedErrorMessage = await saveMessage(errorMessage);
@@ -331,6 +324,9 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
     }
   };
 
+
+
+
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
@@ -338,24 +334,6 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
     if (!sessionId) {
       sessionId = await onCreateChat(`Consulta: ${newMessage.substring(0, 30)}...`);
       if (!sessionId) return;
-    }
-
-    // Check if user wants to create automation
-    if (detectAutomationKeywords(newMessage)) {
-      const suggestionMessage: Message = {
-        id: (Date.now() + 0.5).toString(),
-        content: '🤖 He detectado que quieres crear una automatización. Te recomiendo usar el botón "Crear Automatización" para un proceso más completo y eficiente.',
-        sender: "ai",
-        session_id: sessionId,
-        created_at: new Date().toISOString()
-      };
-      
-      const savedSuggestion = await saveMessage(suggestionMessage);
-      if (savedSuggestion) {
-        setMessages(prev => [...prev, savedSuggestion]);
-      }
-      setNewMessage('');
-      return;
     }
 
     const userMessage: Message = {
@@ -375,44 +353,66 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
     setNewMessage("");
     setLoading(true);
 
-    // Extract business information from user message
-    const newBusinessData = { ...businessData };
-    const lowerMessage = newMessage.toLowerCase();
-    
-    // Update business data based on user input
-    if (lowerMessage.includes('empresa') || lowerMessage.includes('negocio') || lowerMessage.includes('compañía')) {
-      newBusinessData.company = newMessage;
-    }
-    if (lowerMessage.includes('proceso') || lowerMessage.includes('operacion') || lowerMessage.includes('tarea')) {
-      newBusinessData.processes = newMessage;
-    }
-    if (lowerMessage.includes('cliente') || lowerMessage.includes('ventas') || lowerMessage.includes('marketing')) {
-      newBusinessData.customers = newMessage;
-    }
-    if (lowerMessage.includes('herramienta') || lowerMessage.includes('software') || lowerMessage.includes('sistema')) {
-      newBusinessData.tools = newMessage;
-    }
-    
-    setBusinessData(newBusinessData);
-
-    // Generate AI response
-    const aiResponse = await generateAIResponse(newMessage, sessionId);
-
-    const aiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: aiResponse,
-      sender: "ai",
-      session_id: sessionId,
-      message_type: currentPhase === 'discovery' ? 'question' : 'standard',
-      created_at: new Date().toISOString()
-    };
-
-    const savedAiMessage = await saveMessage(aiMessage);
-    if (savedAiMessage) {
-      setMessages(prev => [...prev, savedAiMessage]);
+    // If we're not expecting a response, start the questioning flow
+    if (!awaitingResponse && currentQuestion === 0) {
+      await askNextQuestion(sessionId);
+      setLoading(false);
+      return;
     }
 
-    setLoading(false);
+    // If we're awaiting a response, process the user's answer
+    if (awaitingResponse && currentQuestion < discoveryQuestions.length) {
+      const currentQuestionData = discoveryQuestions[currentQuestion];
+      const isComplete = isResponseComplete(newMessage, currentQuestionData.field);
+      
+      if (isComplete) {
+        // Save the response to business data
+        const updatedData = { ...businessData };
+        updatedData[currentQuestionData.field] = newMessage;
+        setBusinessData(updatedData);
+        
+        // Move to next question
+        setCurrentQuestion(prev => prev + 1);
+        setAwaitingResponse(false);
+        
+        // Ask next question or complete the flow
+        setTimeout(async () => {
+          await askNextQuestion(sessionId);
+          setLoading(false);
+        }, 1000);
+      } else {
+        // Response is incomplete, ask for more details
+        const followUpMessage: Message = {
+          id: Date.now().toString(),
+          content: currentQuestionData.followUp,
+          sender: "ai",
+          session_id: sessionId,
+          message_type: 'question',
+          created_at: new Date().toISOString()
+        };
+
+        const savedFollowUp = await saveMessage(followUpMessage);
+        if (savedFollowUp) {
+          setMessages(prev => [...prev, savedFollowUp]);
+        }
+        setLoading(false);
+      }
+    } else {
+      // General conversation after automation is created
+      const generalResponse: Message = {
+        id: Date.now().toString(),
+        content: "Gracias por tu mensaje. ¿Hay algo más en lo que pueda ayudarte con respecto a la automatización de tu empresa?",
+        sender: "ai",
+        session_id: sessionId,
+        created_at: new Date().toISOString()
+      };
+
+      const savedResponse = await saveMessage(generalResponse);
+      if (savedResponse) {
+        setMessages(prev => [...prev, savedResponse]);
+      }
+      setLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -422,11 +422,6 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
     }
   };
 
-  const handleAgentRequest = async (agentName: string) => {
-    const message = `Me interesa implementar el ${agentName}. ¿Podrías crear este agente para mi empresa?`;
-    setNewMessage(message);
-    await handleSend();
-  };
 
   if (!currentChatId) {
     return (
@@ -493,16 +488,12 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
             <div>
               <h1 className="font-semibold">Consultor IA Empresarial</h1>
               <div className="flex items-center gap-2">
-                <Badge variant={currentPhase === 'discovery' ? 'default' : 'secondary'}>
-                  Descubrimiento
+                <Badge variant={currentQuestion < 4 ? 'default' : 'secondary'}>
+                  Consulta ({currentQuestion}/4)
                 </Badge>
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <Badge variant={currentPhase === 'analysis' ? 'default' : 'secondary'}>
-                  Análisis
-                </Badge>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <Badge variant={currentPhase === 'proposal' ? 'default' : 'secondary'}>
-                  Propuesta
+                <Badge variant={currentQuestion >= 4 ? 'default' : 'secondary'}>
+                  Automatización
                 </Badge>
               </div>
             </div>
@@ -517,11 +508,18 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
             <Bot className="h-12 w-12 text-primary mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">¡Hola! Soy tu consultor IA</h3>
             <p className="text-muted-foreground mb-6">
-              Voy a conocer tu empresa para proponerte agentes IA específicos que optimicen tus procesos.
+              Te haré algunas preguntas para conocer tu empresa y crear una automatización personalizada.
             </p>
             <div className="bg-muted/50 rounded-lg p-4 max-w-2xl mx-auto">
-              <p className="font-medium mb-2">Para empezar, cuéntame:</p>
-              <p className="text-sm">¿A qué se dedica tu empresa y cuáles son tus principales procesos?</p>
+              <p className="font-medium mb-2">📈 Proceso de consulta empresarial:</p>
+              <div className="text-sm space-y-1">
+                <p>• Te haré 4 preguntas sobre tu empresa</p>
+                <p>• Analizaré tu información</p>
+                <p>• Crearé tu automatización personalizada</p>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                💡 Envía cualquier mensaje para comenzar
+              </p>
             </div>
           </div>
         )}
@@ -548,28 +546,6 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
             >
               <div className="whitespace-pre-wrap">{message.content}</div>
               
-              {message.message_type === 'proposal' && proposedAgents.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  {proposedAgents.map((agent, index) => (
-                    <Card key={index} className="bg-background">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold">{agent.name}</h4>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAgentRequest(agent.name)}
-                            className="gap-1"
-                          >
-                            <CheckCircle className="h-3 w-3" />
-                            Crear
-                          </Button>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{agent.description}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
             </div>
 
             {message.sender === "user" && (
@@ -599,29 +575,12 @@ El archivo JSON ha sido enviado a nuestro equipo para su revisión final.
 
       {/* Fixed input area at absolute bottom */}
       <div className="absolute bottom-0 left-0 right-0 bg-background/98 backdrop-blur-md border-t p-4">
-        <div className="flex gap-2 max-w-4xl mx-auto mb-3">
-          <Button
-            onClick={() => {
-              const email = prompt("Ingresa tu email para recibir la automatización:");
-              const phone = prompt("Ingresa tu teléfono para contacto:");
-              if (email && phone) {
-                createAutomation({ email, phone });
-              }
-            }}
-            disabled={loading}
-            size="sm"
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-          >
-            🤖 Crear Automatización
-          </Button>
-        </div>
         <div className="flex gap-2 max-w-4xl mx-auto">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Cuéntame sobre tu empresa y procesos o describe la automatización que necesitas..."
+            placeholder={awaitingResponse ? "Responde a la pregunta..." : "Escribe cualquier mensaje para comenzar la consulta..."}
             disabled={loading}
             className="flex-1"
           />
