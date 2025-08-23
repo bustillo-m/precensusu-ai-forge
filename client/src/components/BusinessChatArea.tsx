@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 
 interface User {
@@ -35,7 +36,6 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   const [currentPhase, setCurrentPhase] = useState<'discovery' | 'analysis' | 'proposal' | 'creation'>('discovery');
   const [businessData, setBusinessData] = useState<{
     company?: string;
-    industry?: string;
     mainActivity?: string;
     challenges?: string;
     processes?: string;
@@ -153,47 +153,61 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
     {
       text: "¡Hola! Para diseñarte las mejores automatizaciones, me gustaría conocer mejor tu negocio. ¿Cuál es el nombre de tu empresa y a qué sector pertenece?",
       field: "company" as keyof typeof businessData,
-      followUp: "Por favor, comparte el nombre de tu empresa y el sector o industria en la que opera (por ejemplo: restaurante, consultora, tienda online, etc.)."
+      followUp: "Por favor, comparte el nombre de tu empresa y el sector específico en el que opera (por ejemplo: e-commerce, marketing digital, restaurante, consultoría, etc.)."
     },
     {
-      text: "¿Cuál es la principal actividad de tu empresa? ¿Qué productos vendes o servicios ofreces a tus clientes?",
-      field: "mainActivity" as keyof typeof businessData,
-      followUp: "Describe con más detalle qué hace tu empresa día a día y cómo generas ingresos."
-    },
-    {
-      text: "¿Cuáles son los principales puntos de dolor o desafíos operativos que enfrenta tu empresa? ¿Qué procesos te quitan más tiempo del día?",
-      field: "challenges" as keyof typeof businessData,
-      followUp: "Comparte los principales obstáculos, tareas repetitivas o problemas que te gustaría resolver para ahorrar tiempo y dinero."
-    },
-    {
-      text: "¿En qué procesos clave de tu empresa se invierte más tiempo manual? ¿Qué departamentos o áreas son las que más recursos consumen?",
+      text: "¿Cuáles son las tareas o procesos más repetitivos que realizáis en vuestra empresa? ¿Qué actividades os consumen más tiempo?",
       field: "processes" as keyof typeof businessData,
-      followUp: "Identifica las actividades donde más horas de trabajo se dedican o donde hay más trabajo manual repetitivo."
+      followUp: "Describe con más detalle las tareas manuales repetitivas, procesos administrativos o actividades que requieren mucho tiempo del equipo."
+    },
+    {
+      text: "¿Cuáles son los principales retos o problemas en esos procesos? ¿Qué os gustaría mejorar o automatizar?",
+      field: "challenges" as keyof typeof businessData,
+      followUp: "Explica los obstáculos específicos, errores frecuentes o ineficiencias que experimentáis en esos procesos repetitivos."
+    },
+    {
+      text: "Para entender mejor vuestro negocio, ¿cuál es vuestra principal actividad comercial? ¿Cómo generáis ingresos?",
+      field: "mainActivity" as keyof typeof businessData,
+      followUp: "Describe los servicios que ofrecéis, productos que vendéis, o cómo funciona vuestro modelo de negocio."
     }
   ];
 
   const isResponseComplete = (response: string, field: keyof typeof businessData): boolean => {
     const cleanResponse = response.trim().toLowerCase();
+    const words = cleanResponse.split(' ').filter(word => word.length > 2);
     
     // Check for minimal information requirements
-    if (cleanResponse.length < 10) return false;
+    if (cleanResponse.length < 15 || words.length < 3) return false;
     
     switch (field) {
       case 'company':
-        return cleanResponse.includes('empresa') || cleanResponse.includes('compañía') || 
-               cleanResponse.includes('negocio') || cleanResponse.length > 15;
+        // Should contain company name and sector/industry
+        const hasCompanyIndicators = cleanResponse.includes('empresa') || cleanResponse.includes('compañía') || 
+                                   cleanResponse.includes('negocio') || cleanResponse.includes('llamamos') ||
+                                   cleanResponse.includes('somos');
+        const hasSectorIndicators = ['marketing', 'ventas', 'restaurante', 'tienda', 'ecommerce', 'consultora', 
+                                   'servicios', 'tecnología', 'salud', 'educación', 'retail', 'inmobiliaria'].some(sector => 
+                                   cleanResponse.includes(sector));
+        return hasCompanyIndicators || hasSectorIndicators || cleanResponse.length > 25;
+        
       case 'mainActivity':
-        return cleanResponse.includes('servicio') || cleanResponse.includes('producto') ||
-               cleanResponse.includes('vendemos') || cleanResponse.includes('ofrecemos') ||
-               cleanResponse.length > 20;
+        // Should describe business model or revenue generation
+        const activityKeywords = ['vendemos', 'ofrecemos', 'servicios', 'productos', 'clientes', 'facturación',
+                                'ingresos', 'comercializamos', 'distribuimos', 'consultamos', 'asesoramos'];
+        return activityKeywords.some(keyword => cleanResponse.includes(keyword)) || words.length >= 6;
+        
       case 'challenges':
-        return cleanResponse.includes('problema') || cleanResponse.includes('desafío') ||
-               cleanResponse.includes('dificultad') || cleanResponse.includes('tiempo') ||
-               cleanResponse.length > 20;
+        // Should describe specific problems or pain points
+        const challengeKeywords = ['problema', 'desafío', 'dificultad', 'tiempo', 'lento', 'error', 'manual', 
+                                 'repetitivo', 'ineficiente', 'costoso', 'difícil', 'complicado', 'perdemos'];
+        return challengeKeywords.some(keyword => cleanResponse.includes(keyword)) || words.length >= 5;
+        
       case 'processes':
-        return cleanResponse.includes('proceso') || cleanResponse.includes('departamento') ||
-               cleanResponse.includes('área') || cleanResponse.includes('tiempo') ||
-               cleanResponse.length > 15;
+        // Should describe repetitive tasks or time-consuming activities
+        const processKeywords = ['proceso', 'tarea', 'actividad', 'tiempo', 'horas', 'manual', 'repetitivo',
+                               'administración', 'gestión', 'entrada', 'registro', 'control', 'seguimiento'];
+        return processKeywords.some(keyword => cleanResponse.includes(keyword)) || words.length >= 4;
+        
       default:
         return false;
     }
@@ -442,7 +456,7 @@ Puedes responder de varias formas:
     const response = userResponse.trim().toLowerCase();
     let selectedProposal = null;
 
-    // Check if user selected a number
+    // Check if user selected a number directly
     const numberMatch = response.match(/(\d+)/);
     if (numberMatch) {
       const proposalIndex = parseInt(numberMatch[1]) - 1;
@@ -450,22 +464,123 @@ Puedes responder de varias formas:
         selectedProposal = proposals[proposalIndex];
       }
     }
+    
+    // Check for natural language selection ("la primera", "la segunda", etc.)
+    if (!selectedProposal) {
+      const naturalSelections = [
+        { patterns: [/la primera/, /primera opción/, /opción 1/, /primer/, /primero/], index: 0 },
+        { patterns: [/la segunda/, /segunda opción/, /opción 2/, /segundo/], index: 1 },
+        { patterns: [/la tercera/, /tercera opción/, /opción 3/, /tercer/, /tercero/], index: 2 }
+      ];
+      
+      for (const selection of naturalSelections) {
+        if (selection.patterns.some(pattern => pattern.test(response)) && 
+            selection.index < proposals.length) {
+          selectedProposal = proposals[selection.index];
+          break;
+        }
+      }
+    }
+    
+    // Check for mentions of proposal titles or keywords
+    if (!selectedProposal && proposals.length > 0) {
+      for (let i = 0; i < proposals.length; i++) {
+        const proposal = proposals[i];
+        const titleWords = proposal.title.toLowerCase().split(' ').filter(word => word.length > 3);
+        const keywordMatches = [
+          'contenido', 'generador', 'marketing', 'leads', 'ventas', 'pedidos', 'inventario', 
+          'chatbot', 'atención', 'cliente', 'reportes', 'seguimiento', 'administrativo'
+        ];
+        
+        // Check if user mentions proposal title words or related keywords
+        const titleMatch = titleWords.some(word => response.includes(word));
+        const keywordMatch = keywordMatches.some(keyword => 
+          response.includes(keyword) && proposal.title.toLowerCase().includes(keyword)
+        );
+        
+        if (titleMatch || keywordMatch) {
+          selectedProposal = proposal;
+          break;
+        }
+      }
+    }
+    
+    // Check for general acceptance responses ("sí", "me gusta", etc.)
+    if (!selectedProposal) {
+      const acceptancePatterns = [
+        /^sí$/,
+        /^si$/,
+        /me gusta/,
+        /me parece bien/,
+        /perfecto/,
+        /acepto/,
+        /quiero.*automatización/,
+        /quiero.*agente/,
+        /quiero.*bot/,
+        /crear.*automatización/,
+        /crear.*agente/,
+        /me interesa/,
+        /está bien/,
+        /vale/,
+        /ok/,
+        /de acuerdo/,
+        /quiero esta/,
+        /quiero esa/,
+        /esa automatización/,
+        /esta automatización/
+      ];
+      
+      if (acceptancePatterns.some(pattern => pattern.test(response))) {
+        if (proposals.length === 1) {
+          // If only one proposal, select it
+          selectedProposal = proposals[0];
+        } else {
+          // Multiple proposals, ask for clarification
+          const clarificationMessage: Message = {
+            id: Date.now().toString(),
+            content: `¡Perfecto! Veo que te interesa una de las automatizaciones. 
+
+¿Cuál de las ${proposals.length} opciones te parece más útil?
+
+Puedes responder con:
+• El **número** (1, 2, 3...)
+• "La primera", "la segunda", etc.
+• O menciona palabras clave de la automatización que prefieras
+
+¿Cuál eliges?`,
+            sender: "ai",
+            session_id: sessionId,
+            message_type: 'question',
+            created_at: new Date().toISOString()
+          };
+
+          const savedMessage = await saveMessage(clarificationMessage);
+          if (savedMessage) {
+            setMessages(prev => [...prev, savedMessage]);
+            scrollToBottom();
+          }
+          return;
+        }
+      }
+    }
 
     if (selectedProposal) {
       // User selected a proposal - proceed with automation creation
       await triggerAutomationCreation(sessionId, selectedProposal);
-    } else if (response.includes('personalizado') || response.includes('específico') || response.includes('otro')) {
+    } else if (response.includes('personalizado') || response.includes('específico') || 
+               response.includes('otro') || response.includes('diferente') || 
+               response.includes('custom') || response.includes('distinto')) {
       // User wants something custom
       const customMessage: Message = {
         id: Date.now().toString(),
-        content: `Perfecto! Me encanta que busques una solución personalizada.
+        content: `¡Perfecto! Me encanta que busques una solución personalizada.
 
 Por favor, describe con más detalle:
 • ¿Qué proceso específico quieres automatizar?
 • ¿Cuáles serían los pasos ideales de esta automatización?
 • ¿Qué resultado final esperas obtener?
 
-Una vez que tenga estos detalles, crearé una automatización completamente personalizada para tu empresa.`,
+Una vez que tenga estos detalles, crearé una automatización completamente personalizada para vuestra empresa.`,
         sender: "ai",
         session_id: sessionId,
         message_type: 'question',
@@ -481,16 +596,19 @@ Una vez que tenga estos detalles, crearé una automatización completamente pers
       setDirectAutomation(userResponse);
       setAwaitingResponse(true);
     } else {
-      // Invalid response, ask again
+      // Invalid response, ask again with more examples
       const clarificationMessage: Message = {
         id: Date.now().toString(),
         content: `No he podido identificar tu selección. 
 
-Por favor, responde con:
-• El **número** de la propuesta que te interese (1, 2, 3...)
-• O dime "personalizado" si necesitas algo específico diferente
+Puedes responder de varias formas:
+• El **número** de la propuesta (1, 2, 3...)
+• "La primera", "la segunda", "la tercera"
+• Simplemente "sí" si te gusta alguna
+• Menciona palabras clave de la automatización que prefieras
+• O di "personalizado" si necesitas algo diferente
 
-¿Cuál de las opciones te parece más útil para tu empresa?`,
+¿Cuál de las automatizaciones te parece más útil para vuestra empresa?`,
         sender: "ai",
         session_id: sessionId,
         message_type: 'question',

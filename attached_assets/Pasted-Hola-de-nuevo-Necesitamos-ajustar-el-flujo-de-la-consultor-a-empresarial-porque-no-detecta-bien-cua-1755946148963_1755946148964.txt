@@ -1,0 +1,22 @@
+Hola de nuevo. Necesitamos ajustar el flujo de la consultoría empresarial porque no detecta bien cuando el cliente acepta una propuesta y no genera la automatización. También suele proponer solo una automatización genérica. Por favor realiza los siguientes cambios:
+
+1. Redefinir las preguntas de descubrimiento para recabar mejor los detalles de la empresa y los procesos a automatizar. Las preguntas deberían ser estas cuatro, en orden:
+   - "¿Cuál es el nombre de tu empresa y a qué sector o industria pertenece?" (campo: company e industry)
+   - "¿Cuál es la actividad principal de tu empresa? (por ejemplo: marketing digital, comercio electrónico, restauración...)" (campo: mainActivity)
+   - "¿Cuáles son los principales procesos o tareas repetitivas que deseas automatizar?" (campo: processes)
+   - "¿Cuáles son los principales retos, cuellos de botella o puntos de dolor de tu negocio?" (campo: challenges)
+   Asegúrate de actualizar `isResponseComplete` para validar adecuadamente cada respuesta (pide aclaraciones si son demasiado cortas o no contienen palabras relevantes) y almacena las respuestas en los campos correspondientes de `businessData`.
+
+2. Ajustar la función `generateAgentProposals` para basarse en los campos `mainActivity`, `processes` y `challenges`. Por ejemplo:
+   - Si `mainActivity` o `challenges` incluye "marketing", proponer un agente de marketing digital (generación de contenidos, gestión de leads).
+   - Si `mainActivity` o `processes` incluye "ventas" o "ecommerce", proponer un agente de ventas/comercio electrónico (pipeline de ventas, gestión de pedidos).
+   - Si `mainActivity` incluye "restauración" o "hostelería", proponer un agente de pedidos/reservas.
+   - Para "administración", proponer un agente administrativo (gestión de agenda, facturación).
+   - Si no encaja con ninguna categoría, proponer un agente genérico con RAG.
+   Devuelve como máximo 3 propuestas.
+
+3. Modificar `handleProposalSelection` para detectar otras formas en que el cliente acepte la propuesta. Además de seleccionar por número ("1", "primera", "segunda", etc.), debe aceptar si el cliente responde con frases como "sí", "si", "me gusta esta", "quiero esta automatización", "acepto". En esos casos, si sólo hay una propuesta, se debe ejecutar `triggerAutomationCreation` con esa propuesta. Si hay varias y no se indica número, puedes asumir que acepta la primera.
+
+4. Asegúrate de que `triggerAutomationCreation` se llama cuando el cliente acepta la propuesta y se lanza el flujo multi‑IA como antes.
+
+Una vez implementados estos cambios, ejecuta el proyecto y prueba el chat. Comprueba que al contestar las cuatro preguntas, el sistema propone varias automatizaciones específicas según la información y que al decir "sí" o "me gusta la primera" se genera la automatización. También verifica que el chat sigue auto‑desplazándose al final.

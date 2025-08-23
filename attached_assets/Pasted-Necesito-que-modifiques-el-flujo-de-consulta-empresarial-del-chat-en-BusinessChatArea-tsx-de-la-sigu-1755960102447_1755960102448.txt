@@ -1,0 +1,16 @@
+Necesito que modifiques el flujo de consulta empresarial del chat en BusinessChatArea.tsx de la siguiente manera:
+
+1. Ajusta el estado `businessData` y las preguntas de descubrimiento para almacenar los datos claves que necesita `generateAgentProposals`: nombre y sector de la empresa (`company` y `mainActivity`), procesos repetitivos (`processes`) y retos/puntos de dolor (`challenges`). No necesitamos `tools` ni `objective`.
+2. Actualiza el array `discoveryQuestions` para que pregunte específicamente esos campos, por ejemplo:
+   - “¿Cuál es el nombre de tu empresa y a qué sector pertenece?” → llenar `company` y `mainActivity`.
+   - “¿Cuáles son las tareas o procesos más repetitivos que realizáis?” → llenar `processes`.
+   - “¿Cuáles son los principales retos o problemas en esos procesos?” → llenar `challenges`.
+   Cada pregunta debe incluir un `followUp` que pida más detalle si la respuesta es muy corta.
+3. Mejora `isResponseComplete` para validar que cada respuesta contiene información suficiente (p. ej., que `mainActivity` contenga palabras como “ventas”, “marketing”, etc., y que las respuestas de procesos y retos tengan varias palabras).
+4. Revisa `generateAgentProposals` para que utilice `mainActivity`, `processes` y `challenges` del `businessData` y genere hasta tres automatizaciones o agentes de IA apropiados según el sector y los problemas detectados. Por ejemplo, si identifica marketing, propone un generador de contenidos y un gestor de leads; si detecta ventas, un agente de ventas; si el reto es inventario, un gestor de stock. Si no hay coincidencias, añade una propuesta genérica.
+5. Amplía `handleProposalSelection` para reconocer cuando el usuario acepta una propuesta sin indicar número: detecta frases como “sí”, “me gusta”, “quiero esta”, “acepto”, o cuando menciona el título de la propuesta (por ejemplo “ventas” o “generador de contenidos”). Si hay una sola propuesta en el listado, cualquier afirmación positiva debe seleccionarla. Si el usuario escribe un número (“1”, “2”, etc.), debe seguir funcionando como ahora. Sólo cuando detectes aceptación llama a `triggerAutomationCreation(sessionId, selectedProposal)`.
+6. Mantén la lógica de saltar la fase de descubrimiento si el usuario especifica claramente la automatización que quiere crear desde el principio (por ejemplo: “quiero automatizar las facturas”); en ese caso, llama directamente a `createAutomationFlow` con esa petición sin preguntar por bases de datos ni herramientas.
+7. Elimina cualquier pregunta de personalización de la automatización (no pidas en qué base de datos guardar ni qué herramientas usar).
+8. Asegúrate de llamar a `scrollToBottom()` después de añadir cada mensaje (incluidas las propuestas y el resumen final) para que el cuadro de texto se mantenga siempre al final y no quede a mitad de la conversación.
+
+Aplica estos cambios en `BusinessChatArea.tsx` y otros archivos si es necesario. Una vez actualices el código, vuelve a ejecutar la aplicación y prueba todo el flujo de conversación (descubrimiento → propuestas → aceptación → creación) para confirmar que los problemas quedan resueltos.
