@@ -151,24 +151,24 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
 
   const discoveryQuestions = [
     {
-      text: "¿Cuál es el nombre de tu empresa y a qué sector pertenece?",
+      text: "¡Hola! Para diseñarte las mejores automatizaciones, me gustaría conocer mejor tu negocio. ¿Cuál es el nombre de tu empresa y a qué sector pertenece?",
       field: "company" as keyof typeof businessData,
-      followUp: "Por favor, proporciona el nombre de tu empresa y el sector en el que opera."
+      followUp: "Por favor, comparte el nombre de tu empresa y el sector o industria en la que opera (por ejemplo: restaurante, consultora, tienda online, etc.)."
     },
     {
-      text: "¿Cuál es la principal actividad o servicio que ofrece tu empresa?",
+      text: "¿Cuál es la principal actividad de tu empresa? ¿Qué productos vendes o servicios ofreces a tus clientes?",
       field: "mainActivity" as keyof typeof businessData,
-      followUp: "Describe con más detalle la actividad principal de tu empresa y cómo generas ingresos."
+      followUp: "Describe con más detalle qué hace tu empresa día a día y cómo generas ingresos."
     },
     {
-      text: "¿Cuáles son los principales desafíos o problemas operativos que enfrenta tu empresa actualmente?",
+      text: "¿Cuáles son los principales puntos de dolor o desafíos operativos que enfrenta tu empresa? ¿Qué procesos te quitan más tiempo del día?",
       field: "challenges" as keyof typeof businessData,
-      followUp: "Menciona los principales obstáculos, tareas repetitivas o problemas que te gustaría resolver."
+      followUp: "Comparte los principales obstáculos, tareas repetitivas o problemas que te gustaría resolver para ahorrar tiempo y dinero."
     },
     {
-      text: "¿Qué procesos o departamentos de tu empresa consumen más tiempo o recursos?",
+      text: "¿En qué procesos clave de tu empresa se invierte más tiempo manual? ¿Qué departamentos o áreas son las que más recursos consumen?",
       field: "processes" as keyof typeof businessData,
-      followUp: "Identifica las áreas donde más tiempo se invierte o donde hay más trabajo manual."
+      followUp: "Identifica las actividades donde más horas de trabajo se dedican o donde hay más trabajo manual repetitivo."
     }
   ];
 
@@ -202,24 +202,36 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   // Function to detect if user wants direct automation
   const detectDirectAutomation = (message: string): boolean => {
     const cleanMessage = message.trim().toLowerCase();
-    const automationKeywords = ['automatizar', 'automatización', 'automático', 'bot', 'agente'];
-    const processKeywords = ['proceso', 'tarea', 'flujo', 'operación', 'actividad'];
     
-    const hasAutomationKeyword = automationKeywords.some(keyword => cleanMessage.includes(keyword));
-    const hasProcessKeyword = processKeywords.some(keyword => cleanMessage.includes(keyword));
-    
-    // Also check for specific scenarios like "quiero un bot que...", "necesito automatizar..."
-    const specificPatterns = [
-      /quiero.*bot/,
-      /necesito.*automatizar/,
-      /crear.*agente/,
-      /generar.*automatización/,
-      /hacer.*automático/
+    // Specific direct automation patterns
+    const directPatterns = [
+      /quiero.*(?:bot|agente|automatizar|automatización)/,
+      /necesito.*(?:automatizar|automatización|bot|agente)/,
+      /crear.*(?:agente|bot|automatización)/,
+      /generar.*(?:automatización|bot|agente)/,
+      /hacer.*automático/,
+      /automatización.*(?:de|para|que)/,
+      /bot.*(?:de|para|que)/,
+      /agente.*(?:de|para|que)/,
+      /automatizar.*(?:el|la|los|las|mi|mis)/
     ];
     
-    const hasSpecificPattern = specificPatterns.some(pattern => pattern.test(cleanMessage));
+    // Specific business processes that indicate direct automation
+    const processAutomationPatterns = [
+      /automatizar.*(?:facturas|ventas|inventario|pedidos|clientes)/,
+      /bot.*(?:atención|servicio|ventas|soporte)/,
+      /agente.*(?:ventas|marketing|administrativo|servicio)/,
+      /automatización.*(?:facturas|contabilidad|inventario|crm)/
+    ];
     
-    return (hasAutomationKeyword && hasProcessKeyword) || hasSpecificPattern;
+    const hasDirectPattern = directPatterns.some(pattern => pattern.test(cleanMessage));
+    const hasProcessPattern = processAutomationPatterns.some(pattern => pattern.test(cleanMessage));
+    
+    // Also check for specific automation types
+    const automationTypes = ['chatbot', 'crm', 'facturación', 'inventario', 'leads', 'marketing', 'ventas'];
+    const hasAutomationType = automationTypes.some(type => cleanMessage.includes(type));
+    
+    return hasDirectPattern || hasProcessPattern || hasAutomationType;
   };
 
   // Function to generate AI agent proposals based on business data
@@ -332,7 +344,7 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
     const savedMessage = await saveMessage(aiMessage);
     if (savedMessage) {
       setMessages(prev => [...prev, savedMessage]);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
     
     setAwaitingResponse(true);
@@ -362,7 +374,7 @@ Ahora voy a generar propuestas de agentes IA específicamente diseñados para re
     const savedAnalysis = await saveMessage(analysisMessage);
     if (savedAnalysis) {
       setMessages(prev => [...prev, savedAnalysis]);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
 
     // Generate proposals after a brief delay
@@ -397,9 +409,15 @@ ${proposal.useCases.map(useCase => `• ${useCase}`).join('\n')}
 `;
     });
 
-    proposalsContent += `💡 **¿Qué te parece más útil para tu empresa?**
+    proposalsContent += `💡 **¿Qué automatización te parece más útil para tu empresa?**
 
-Escribe el **número** de la propuesta que más te interese (1, 2, 3...) o si ninguna encaja perfectamente, dime qué tipo de automatización específica necesitas.`;
+Puedes responder de varias formas:
+• El **número** (1, 2, 3...)
+• "La primera", "la segunda", "la tercera"
+• Simplemente "sí" si te gusta alguna
+• O descríbeme una automatización personalizada
+
+¡Elige la que más te ayudaría a ahorrar tiempo y dinero!`;
 
     const proposalMessage: Message = {
       id: Date.now().toString(),
@@ -413,7 +431,7 @@ Escribe el **número** de la propuesta que más te interese (1, 2, 3...) o si ni
     const savedProposal = await saveMessage(proposalMessage);
     if (savedProposal) {
       setMessages(prev => [...prev, savedProposal]);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
 
     setAwaitingResponse(true);
@@ -457,7 +475,7 @@ Una vez que tenga estos detalles, crearé una automatización completamente pers
       const savedMessage = await saveMessage(customMessage);
       if (savedMessage) {
         setMessages(prev => [...prev, savedMessage]);
-        setTimeout(scrollToBottom, 100);
+        scrollToBottom();
       }
 
       setDirectAutomation(userResponse);
@@ -482,7 +500,7 @@ Por favor, responde con:
       const savedMessage = await saveMessage(clarificationMessage);
       if (savedMessage) {
         setMessages(prev => [...prev, savedMessage]);
-        setTimeout(scrollToBottom, 100);
+        scrollToBottom();
       }
     }
   };
@@ -533,7 +551,7 @@ Basado en el análisis completo de tu empresa, voy a crear una automatización q
     const savedMessage = await saveMessage(aiMessage);
     if (savedMessage) {
       setMessages(prev => [...prev, savedMessage]);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
 
     // Trigger the multi-AI automation creation
@@ -627,7 +645,7 @@ El archivo JSON de la automatización ha sido enviado para revisión final.
       const savedMessage = await saveMessage(successMessage);
       if (savedMessage) {
         setMessages(prev => [...prev, savedMessage]);
-        setTimeout(scrollToBottom, 100);
+        scrollToBottom();
       }
 
       toast({
@@ -647,7 +665,7 @@ El archivo JSON de la automatización ha sido enviado para revisión final.
       const savedErrorMessage = await saveMessage(errorMessage);
       if (savedErrorMessage) {
         setMessages(prev => [...prev, savedErrorMessage]);
-        setTimeout(scrollToBottom, 100);
+        scrollToBottom();
       }
 
       toast({
@@ -684,7 +702,7 @@ El archivo JSON de la automatización ha sido enviado para revisión final.
     const savedUserMessage = await saveMessage(userMessage);
     if (savedUserMessage) {
       setMessages(prev => [...prev, savedUserMessage]);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
 
     const originalMessage = newMessage;
@@ -745,7 +763,7 @@ El archivo JSON de la automatización ha sido enviado para revisión final.
           const savedFollowUp = await saveMessage(followUpMessage);
           if (savedFollowUp) {
             setMessages(prev => [...prev, savedFollowUp]);
-            setTimeout(scrollToBottom, 100);
+            scrollToBottom();
           }
           setLoading(false);
         }
@@ -787,7 +805,7 @@ El archivo JSON de la automatización ha sido enviado para revisión final.
     const savedResponse = await saveMessage(generalResponse);
     if (savedResponse) {
       setMessages(prev => [...prev, savedResponse]);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
     setLoading(false);
   };
