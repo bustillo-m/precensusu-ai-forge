@@ -1,0 +1,16 @@
+Necesito que corrijas el generador de propuestas de automatización en BusinessChatArea.tsx para que deje de mostrar siempre el texto genérico (“Agente Personalizado”) y proponga automatizaciones basadas en la información recopilada de cada empresa.
+
+1. Completa correctamente la propiedad `mainActivity` de `businessData` a partir de la descripción de la empresa que proporciona el usuario. Por ejemplo, si el usuario dice que su empresa “se llama Origena y pertenece al sector de la moda”, establece `mainActivity` en "moda" o "e‑commerce". 
+2. Ajusta `discoveryQuestions` si es necesario para pedir explícitamente el sector/actividad (mainActivity) y así no quede `undefined`.
+3. Mejora la función `generateAgentProposals` para que utilice `mainActivity`, `processes` y `challenges` a la hora de generar las propuestas. Debe:
+   • Detectar palabras clave como “moda”, “e‑commerce”, “marketing digital”, “vídeo”, “creación de contenido”, “anuncios”, etc., en `mainActivity`, `processes` o `challenges`.
+   • Si `mainActivity` incluye “moda” y `challenges` o `processes` mencionan vídeos o creación de contenido, añadir propuestas como:
+     - *Generador de vídeos de producto* (genera vídeos automáticos de tus productos para anuncios o redes sociales).
+     - *Planificador de publicaciones en redes sociales* (automatiza la programación de contenido para Instagram, TikTok, etc.).
+   • Mantener las propuestas existentes (agente de ventas, agente de marketing, gestor de inventario, chatbot de atención al cliente, etc.) cuando encajen con el sector detectado.
+   • Si no hay coincidencias con ningún sector o keyword, mostrar solo entonces la propuesta genérica “Agente Personalizado”.
+4. Corrige la impresión de la actividad en la fase de análisis: que no muestre “Actividad: undefined”, sino el valor de `mainActivity` o un aviso si el usuario no lo especificó.
+5. Asegúrate de que el flujo se mantiene: tras presentar las propuestas, el usuario debe poder elegir escribiendo el número, “la primera/segunda/tercera”, “sí”, o el nombre de la propuesta. La función `handleProposalSelection` debe detectar la aceptación y llamar a `triggerAutomationCreation(sessionId, selectedProposal)` con la propuesta correcta.
+6. No introduzcas preguntas de personalización sobre bases de datos o herramientas; el objetivo es proponer y crear automatizaciones basadas en la actividad, procesos y retos de la empresa.
+
+Aplica estos cambios en `BusinessChatArea.tsx` (y cualquier otro archivo que corresponda), vuelve a ejecutar la aplicación y prueba que, con una empresa del sector de la moda que quiere crear vídeos de producto, se proponen automatizaciones como “Generador de vídeos de producto” o “Planificador de redes sociales” en lugar del texto genérico.
