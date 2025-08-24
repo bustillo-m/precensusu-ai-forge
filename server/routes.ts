@@ -18,7 +18,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key";
 async function sendWorkflowEmail(workflowJson: any, userEmail: string, userPhone: string, conversationContext: string) {
   if (!process.env.SENDGRID_API_KEY) {
     console.error('SendGrid API key not configured');
-    return;
+    return { success: false, error: 'Email service not configured' };
   }
 
   // Your company emails - you can change these to your real emails
@@ -124,8 +124,22 @@ Equipo Fluix AI`,
     // Send email to user
     await sgMail.send(userMsg);
     console.log('User workflow email sent successfully to:', userEmail);
-  } catch (error) {
+    
+    return { success: true };
+  } catch (error: any) {
     console.error('Error sending workflow email:', error);
+    
+    // Provide more specific error messages based on SendGrid errors
+    let errorMessage = 'Error enviando el email';
+    if (error.code === 403) {
+      errorMessage = 'Servicio de email temporalmente no disponible (permisos)';
+    } else if (error.code === 401) {
+      errorMessage = 'Servicio de email no configurado correctamente';
+    } else if (error.response?.body?.errors) {
+      errorMessage = `Error de email: ${error.response.body.errors[0]?.message || 'Error desconocido'}`;
+    }
+    
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -942,16 +956,29 @@ Siempre responde en español y enfócate en soluciones de automatización reales
       const workflowResult = await orchestrateWorkflowCreation(conversationContext);
       
       if (workflowResult.success && workflowResult.workflowJson) {
-        // Send JSON to your emails using SendGrid
-        await sendWorkflowEmail(workflowResult.workflowJson, email, phone, conversationContext);
+        // Try to send email with the JSON
+        const emailResult = await sendWorkflowEmail(workflowResult.workflowJson, email, phone, conversationContext);
         
         // Save contact info
         console.log('New automation request:', { email, phone, timestamp: new Date() });
         
-        return res.json({ 
-          success: true, 
-          message: 'Automatización creada exitosamente. Te contactaremos pronto.' 
-        });
+        if (emailResult.success) {
+          return res.json({ 
+            success: true, 
+            message: '✅ Automatización creada exitosamente. Hemos enviado el archivo JSON a tu email. Te contactaremos pronto.',
+            emailSent: true
+          });
+        } else {
+          // Email failed, provide JSON directly and inform user
+          return res.json({ 
+            success: true, 
+            message: `⚠️ Automatización creada exitosamente, pero hubo un problema enviando el email (${emailResult.error}). Puedes descargar el archivo JSON abajo. Te contactaremos pronto.`,
+            emailSent: false,
+            emailError: emailResult.error,
+            workflowJson: workflowResult.workflowJson,
+            downloadAvailable: true
+          });
+        }
       } else {
         return res.status(500).json({ 
           error: 'Error generando la automatización', 

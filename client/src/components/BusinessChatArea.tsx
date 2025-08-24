@@ -596,14 +596,14 @@ Puedes responder de varias formas:
     if (!selectedProposal && proposals.length > 0) {
       for (let i = 0; i < proposals.length; i++) {
         const proposal = proposals[i];
-        const titleWords = proposal.title.toLowerCase().split(' ').filter(word => word.length > 3);
+        const titleWords = proposal.title.toLowerCase().split(' ').filter((word: string) => word.length > 3);
         const keywordMatches = [
           'contenido', 'generador', 'marketing', 'leads', 'ventas', 'pedidos', 'inventario', 
           'chatbot', 'atención', 'cliente', 'reportes', 'seguimiento', 'administrativo'
         ];
         
         // Check if user mentions proposal title words or related keywords
-        const titleMatch = titleWords.some(word => response.includes(word));
+        const titleMatch = titleWords.some((word: string) => response.includes(word));
         const keywordMatch = keywordMatches.some(keyword => 
           response.includes(keyword) && proposal.title.toLowerCase().includes(keyword)
         );
@@ -831,21 +831,30 @@ Procesos: ${businessData.processes}`;
       }
 
       const data = await response.json();
+      console.log('Automation creation response:', data);
+
+      // Create download function for JSON if available
+      const downloadJSON = (jsonData: any) => {
+        const dataStr = JSON.stringify(jsonData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `automatizacion-${Date.now()}.json`;
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+      };
 
       let successContent = '';
+      let downloadButton = '';
+      
+      // Base success message
       if (selectedProposal) {
         successContent = `🎉 ¡${selectedProposal.title} creada exitosamente!
 
 Hemos generado tu automatización específicamente diseñada para:
 • **Empresa:** ${businessData.company}
 • **Automatización:** ${selectedProposal.title}
-• **Beneficios esperados:** ${selectedProposal.benefits.join(', ')}
-
-El archivo JSON de la automatización ha sido enviado para revisión final.
-
-📧 Te contactaremos pronto a ${user.email} con los detalles de implementación.
-
-¡Gracias por confiar en Fluix AI para automatizar tu negocio! 🚀`;
+• **Beneficios esperados:** ${selectedProposal.benefits.join(', ')}`;
       } else {
         successContent = `🎉 ¡Automatización personalizada creada exitosamente!
 
@@ -853,14 +862,39 @@ Hemos generado tu automatización basada en el análisis de:
 • **Tu empresa:** ${businessData.company}
 • **Actividad:** ${businessData.mainActivity}
 • **Desafíos identificados:** ${businessData.challenges}
-• **Procesos optimizados:** ${businessData.processes}
+• **Procesos optimizados:** ${businessData.processes}`;
+      }
+      
+      // Add email status and download info
+      if (data.emailSent) {
+        successContent += `
 
-El archivo JSON de la automatización ha sido enviado para revisión final.
+✅ **Email enviado exitosamente**
+El archivo JSON ha sido enviado a tu email: ${user.email}
 
-📧 Te contactaremos pronto a ${user.email} con los detalles de implementación.
+📧 Te contactaremos pronto con los detalles de implementación.`;
+      } else if (data.downloadAvailable && data.workflowJson) {
+        successContent += `
+
+⚠️ **Problema con email**: ${data.emailError || 'No se pudo enviar el email'}
+
+📋 **Descarga disponible**: Tu automatización está lista. Haz clic en el botón de abajo para descargar el archivo JSON.
+
+📧 Te contactaremos pronto a ${user.email} con los detalles de implementación.`;
+        downloadButton = `
+
+[Descargar JSON de Automatización]`;
+      } else {
+        successContent += `
+
+📋 El archivo JSON de la automatización ha sido generado.
+
+📧 Te contactaremos pronto a ${user.email} con los detalles de implementación.`;
+      }
+      
+      successContent += `
 
 ¡Gracias por confiar en Fluix AI para automatizar tu negocio! 🚀`;
-      }
 
       const successMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -875,10 +909,38 @@ El archivo JSON de la automatización ha sido enviado para revisión final.
         setMessages(prev => [...prev, savedMessage]);
         scrollToBottom();
       }
+      
+      // If download is available, add download message/button
+      if (data.downloadAvailable && data.workflowJson) {
+        const downloadMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          content: `📋 **Descarga tu automatización**
+
+Haz clic en el botón de abajo para descargar el archivo JSON de tu automatización:
+
+🔽 [DESCARGAR AUTOMATIZACIÓN.JSON] 🔽
+
+*Este archivo contiene toda la configuración de tu automatización y puede importarse en N8N o sistemas similares.*`,
+          sender: "ai",
+          session_id: sessionId,
+          created_at: new Date().toISOString()
+        };
+
+        const savedDownloadMessage = await saveMessage(downloadMessage);
+        if (savedDownloadMessage) {
+          setMessages(prev => [...prev, savedDownloadMessage]);
+          scrollToBottom();
+        }
+        
+        // Auto-trigger download
+        setTimeout(() => {
+          downloadJSON(data.workflowJson);
+        }, 1000);
+      }
 
       toast({
         title: "¡Éxito!",
-        description: "Automatización creada. Te contactaremos pronto.",
+        description: data.emailSent ? "Automatización creada y enviada por email." : "Automatización creada. ¡Descarga disponible!",
       });
 
     } catch (error) {
