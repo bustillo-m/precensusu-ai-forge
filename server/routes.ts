@@ -22,7 +22,7 @@ async function sendWorkflowEmail(workflowJson: any, userEmail: string, userPhone
   }
 
   // Your company emails - you can change these to your real emails
-  const companyEmails = ['bustillo.mateo27@gmail.com'];
+  const companyEmails = ['fluix.ai.bb@gmail.com'];
   
   // Email to company
   const companyMsg = {
