@@ -252,193 +252,98 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   const generateAgentProposals = (businessData: any) => {
     const proposals = [];
     
-    // Analyze business data - combine all text for better detection
-    const company = (businessData.company || '').toLowerCase();
-    const mainActivity = (businessData.mainActivity || '').toLowerCase();
-    const processes = (businessData.processes || '').toLowerCase();
-    const challenges = (businessData.challenges || '').toLowerCase();
+    // Combine all business data into one text for analysis
+    const allText = Object.values(businessData).join(" ").toLowerCase();
     
-    // Combine all text for comprehensive analysis
-    const allText = `${company} ${mainActivity} ${processes} ${challenges}`.toLowerCase();
+    console.log('Analyzing business data:', { businessData, allText });
     
-    console.log('Analyzing business data:', { company, mainActivity, processes, challenges, allText });
+    // Detect specific keywords and propose relevant automations
     
-    // MODA / FASHION - Specific proposals for fashion sector
-    if (allText.includes('moda') || allText.includes('fashion') || allText.includes('ropa') || 
-        allText.includes('textil') || allText.includes('diseño de ropa') || allText.includes('vestir')) {
-      
-      // Video content creation for fashion
-      if (allText.includes('vídeo') || allText.includes('contenido') || allText.includes('redes') ||
-          allText.includes('instagram') || allText.includes('tiktok') || allText.includes('anuncios')) {
-        proposals.push({
-          id: 'video-generator',
-          title: '🎞️ Generador de Vídeos de Producto',
-          description: 'Automatiza la creación de vídeos promocionales de tus productos de moda para anuncios y redes sociales.',
-          benefits: ['Vídeos profesionales en minutos', 'Optimizado para cada plataforma', 'Aumenta engagement y ventas'],
-          useCases: ['Vídeos para Instagram y TikTok', 'Anuncios para Facebook Ads', 'Contenido para e-commerce']
-        });
-      }
-      
-      // Social media automation for fashion
+    // Video content creation
+    if (allText.includes('video') || allText.includes('vídeo') || allText.includes('contenido') || 
+        allText.includes('publicidad') || allText.includes('redes')) {
+      proposals.push({
+        id: 'video-generator',
+        title: '🎞️ Generador de Videos de Producto',
+        description: 'Automatiza la creación de videos promocionales de tus productos para anuncios y redes sociales.',
+        benefits: ['Videos profesionales en minutos', 'Optimizado para cada plataforma', 'Aumenta engagement y ventas'],
+        useCases: ['Videos para Instagram y TikTok', 'Anuncios para Facebook Ads', 'Contenido para e-commerce']
+      });
+    }
+    
+    // Social media scheduler
+    if (allText.includes('redes') || allText.includes('publicar') || allText.includes('post') ||
+        allText.includes('instagram') || allText.includes('facebook') || allText.includes('tiktok')) {
       proposals.push({
         id: 'social-scheduler',
         title: '📅 Planificador de Publicaciones en Redes Sociales',
-        description: 'Automatiza la programación y publicación de contenido de moda en Instagram, TikTok y otras plataformas.',
+        description: 'Automatiza la programación y publicación de contenido en Instagram, TikTok y otras plataformas.',
         benefits: ['Programación automática 24/7', 'Contenido optimizado por plataforma', 'Mejor engagement'],
         useCases: ['Programar posts de productos', 'Stories automáticas', 'Campañas de temporada']
       });
-      
-      // Fashion inventory management
-      if (allText.includes('inventario') || allText.includes('stock') || allText.includes('productos') ||
-          allText.includes('temporada') || allText.includes('colección')) {
-        proposals.push({
-          id: 'fashion-inventory',
-          title: '👗 Gestor de Inventario de Moda',
-          description: 'Automatiza el control de stock por tallas, colores y temporadas, prediciendo demanda por tendencias.',
-          benefits: ['Control por tallas y colores', 'Predicción de tendencias', 'Optimiza compras por temporada'],
-          useCases: ['Seguimiento de stock por atributos', 'Alertas de reposición', 'Análisis de temporada']
-        });
-      }
     }
     
-    // E-COMMERCE GENERAL
-    else if (allText.includes('ecommerce') || allText.includes('e-commerce') || allText.includes('tienda online') ||
-             allText.includes('venta online') || allText.includes('shopify') || allText.includes('woocommerce') ||
-             (allText.includes('productos') && (allText.includes('venta') || allText.includes('online')))) {
-      
-      proposals.push(
-        {
-          id: 'order-manager',
-          title: '📦 Gestor de Pedidos Automático',
-          description: 'Automatiza el procesamiento completo de pedidos desde la compra hasta la entrega, incluyendo facturación.',
-          benefits: ['Procesa pedidos 24/7', 'Reduce errores humanos', 'Mejora satisfacción del cliente'],
-          useCases: ['Procesamiento automático', 'Actualización de inventario', 'Notificaciones a clientes']
-        },
-        {
-          id: 'ecommerce-chatbot',
-          title: '🤖 Chatbot de Atención E-commerce',
-          description: 'Bot especializado que responde consultas sobre productos, pedidos, devoluciones y guía de compra.',
-          benefits: ['Soporte 24/7', 'Resuelve el 80% de consultas', 'Aumenta conversiones'],
-          useCases: ['Estado de pedidos', 'Recomendaciones de productos', 'Proceso de devoluciones']
-        }
-      );
+    // Inventory management
+    if (allText.includes('inventario') || allText.includes('stock') || allText.includes('almacén') ||
+        allText.includes('productos') || allText.includes('mercancia')) {
+      proposals.push({
+        id: 'inventory-manager',
+        title: '📦 Gestor de Inventario',
+        description: 'Automatiza el control de stock, predicción de demanda y gestión de proveedores.',
+        benefits: ['Control automático de stock', 'Predicción de demanda', 'Optimiza compras'],
+        useCases: ['Seguimiento de inventario', 'Alertas de reposición', 'Análisis de rotación']
+      });
     }
     
-    // MARKETING DIGITAL / AGENCIA
-    else if (allText.includes('marketing digital') || allText.includes('publicidad') || allText.includes('agencia') ||
-             allText.includes('campañas') || allText.includes('ads') || allText.includes('sem') || allText.includes('seo') ||
-             (allText.includes('marketing') && (allText.includes('digital') || allText.includes('online')))) {
-      
-      proposals.push(
-        {
-          id: 'content-generator',
-          title: '✍️ Generador de Contenidos IA',
-          description: 'Automatiza la creación de contenido para campañas, blogs, emails y redes sociales adaptado a cada cliente.',
-          benefits: ['Contenido en minutos', 'Adaptado a cada marca', 'Optimizado por plataforma'],
-          useCases: ['Posts para redes sociales', 'Copy publicitario', 'Emails de campañas']
-        },
-        {
-          id: 'lead-manager',
-          title: '🎯 Gestor de Leads de Clientes',
-          description: 'Automatiza la gestión de leads para todos tus clientes, desde la captura hasta la conversión.',
-          benefits: ['Gestión centralizada', 'Seguimiento automático', 'Reportes por cliente'],
-          useCases: ['Captura de leads', 'Nurturing automático', 'Reportes de conversión']
-        }
-      );
+    // Sales agent
+    if (allText.includes('ventas') || allText.includes('prospectos') || allText.includes('leads') ||
+        allText.includes('comercial') || allText.includes('clientes potenciales')) {
+      proposals.push({
+        id: 'sales-agent',
+        title: '💼 Agente de Ventas',
+        description: 'Automatiza el proceso de ventas desde la prospección hasta el cierre, con seguimientos personalizados.',
+        benefits: ['Prospección automática', 'Seguimiento personalizado', 'Aumenta conversiones'],
+        useCases: ['Calificar prospectos', 'Seguimiento automático', 'Programación de reuniones']
+      });
     }
     
-    // VENTAS / COMERCIAL
-    else if (allText.includes('ventas') || allText.includes('comercial') || allText.includes('vendedor') ||
-             allText.includes('prospección') || allText.includes('leads') || allText.includes('crm')) {
-      
-      proposals.push(
-        {
-          id: 'sales-agent',
-          title: '💼 Agente de Ventas IA',
-          description: 'Automatiza el proceso de ventas desde la prospección hasta el cierre, con seguimientos personalizados.',
-          benefits: ['Prospección automática', 'Seguimiento personalizado', 'Aumenta conversiones'],
-          useCases: ['Calificar prospectos', 'Seguimiento automático', 'Programación de reuniones']
-        },
-        {
-          id: 'customer-service',
-          title: '🤖 Agente de Atención al Cliente',
-          description: 'Automatiza respuestas a consultas frecuentes y gestiona la atención post-venta.',
-          benefits: ['Respuesta inmediata 24/7', 'Mejora satisfacción', 'Libera tiempo del equipo'],
-          useCases: ['Consultas frecuentes', 'Soporte técnico básico', 'Seguimiento post-venta']
-        }
-      );
+    // Marketing agent
+    if (allText.includes('marketing') || allText.includes('publicidad') || allText.includes('campañas') ||
+        allText.includes('promocion') || allText.includes('anuncios')) {
+      proposals.push({
+        id: 'marketing-agent',
+        title: '📱 Agente de Marketing',
+        description: 'Automatiza campañas de marketing, gestiona redes sociales y analiza métricas de rendimiento.',
+        benefits: ['Campañas automáticas', 'Analiza tendencias', 'Optimiza presupuesto publicitario'],
+        useCases: ['Publicar en redes sociales', 'Segmentar audiencias', 'Analizar ROI de campañas']
+      });
     }
     
-    // SERVICIOS PROFESIONALES / CONSULTORÍA
-    else if (allText.includes('consultor') || allText.includes('servicios profesionales') || 
-             allText.includes('asesor') || allText.includes('clientes') || 
-             (allText.includes('servicios') && !allText.includes('productos'))) {
-      
-      proposals.push(
-        {
-          id: 'client-management',
-          title: '📈 Gestor de Clientes y Proyectos',
-          description: 'Automatiza el seguimiento de clientes, proyectos, facturación y reportes de progreso.',
-          benefits: ['Seguimiento centralizado', 'Facturación automática', 'Reportes de progreso'],
-          useCases: ['Seguimiento de proyectos', 'Facturación recurrente', 'Comunicación con clientes']
-        },
-        {
-          id: 'appointment-scheduler',
-          title: '📅 Programador de Citas IA',
-          description: 'Automatiza la programación de reuniones, envía recordatorios y gestiona cambios de horario.',
-          benefits: ['Programación 24/7', 'Reduce ausencias', 'Optimiza agenda'],
-          useCases: ['Reserva de citas', 'Recordatorios automáticos', 'Reprogramación']
-        }
-      );
+    // Customer service
+    if (allText.includes('atencion') || allText.includes('atención') || allText.includes('clientes') ||
+        allText.includes('soporte') || allText.includes('consultas') || allText.includes('servicio')) {
+      proposals.push({
+        id: 'customer-service',
+        title: '🤖 Agente de Atención al Cliente',
+        description: 'Automatiza respuestas a consultas frecuentes y gestiona la atención al cliente 24/7.',
+        benefits: ['Respuesta inmediata 24/7', 'Mejora satisfacción', 'Libera tiempo del equipo'],
+        useCases: ['Consultas frecuentes', 'Soporte técnico básico', 'Seguimiento post-venta']
+      });
     }
     
-    // Si tenemos menos de 2 propuestas o no hay matches específicos, añadir propuestas genéricas relevantes
-    if (proposals.length < 2) {
-      const genericProposals = [
-        {
-          id: 'report-generator',
-          title: '📊 Generador de Reportes Automático',
-          description: 'Automatiza la creación de reportes empresariales con datos actualizados de todas las fuentes.',
-          benefits: ['Reportes siempre actualizados', 'Ahorra horas semanales', 'Datos consolidados'],
-          useCases: ['Reportes de ventas', 'Análisis de KPIs', 'Informes gerenciales']
-        },
-        {
-          id: 'customer-follow',
-          title: '👥 Sistema de Seguimiento de Clientes',
-          description: 'Automatiza el seguimiento post-venta y detección de oportunidades de negocio.',
-          benefits: ['Mejora retención', 'Detecta oportunidades', 'Aumenta satisfacción'],
-          useCases: ['Follow-up post-venta', 'Encuestas de satisfacción', 'Detección de upselling']
-        },
-        {
-          id: 'admin-assistant',
-          title: '📋 Asistente Administrativo IA',
-          description: 'Automatiza tareas administrativas como documentos, programación y comunicaciones.',
-          benefits: ['Elimina trabajo repetitivo', 'Organiza automáticamente', 'Acelera procesos'],
-          useCases: ['Gestión de documentos', 'Programación de reuniones', 'Comunicaciones internas']
-        }
-      ];
-      
-      // Añadir propuestas genéricas hasta llegar a 3 total
-      for (const proposal of genericProposals) {
-        if (proposals.length < 3 && !proposals.find(p => p.id === proposal.id)) {
-          proposals.push(proposal);
-        }
-      }
-    }
-    
-    // Solo si no se detectó nada específico, mostrar agente personalizado
+    // If no specific matches, offer generic automation
     if (proposals.length === 0) {
       proposals.push({
         id: 'custom-agent',
         title: '🛠️ Agente Personalizado',
-        description: 'Automatización específica diseñada para las necesidades únicas de vuestra empresa.',
+        description: 'Automatización específica diseñada para las necesidades únicas de tu empresa.',
         benefits: ['Solución a medida', 'Integración completa', 'Máximo ROI'],
         useCases: ['Procesos específicos', 'Integraciones personalizadas', 'Automatización avanzada']
       });
     }
     
     console.log('Generated proposals:', proposals);
-    return proposals.slice(0, 3); // Siempre devolver máximo 3 propuestas
+    return proposals.slice(0, 3); // Maximum 3 proposals
   };
 
   const askNextQuestion = async (sessionId: string) => {
@@ -620,10 +525,14 @@ Puedes responder de varias formas:
       const acceptancePatterns = [
         /^sí$/,
         /^si$/,
+        /^yes$/,
         /me gusta/,
         /me parece bien/,
         /perfecto/,
         /acepto/,
+        /genial/,
+        /excelente/,
+        /bueno/,
         /quiero.*automatización/,
         /quiero.*agente/,
         /quiero.*bot/,
@@ -637,7 +546,11 @@ Puedes responder de varias formas:
         /quiero esta/,
         /quiero esa/,
         /esa automatización/,
-        /esta automatización/
+        /esta automatización/,
+        /hacer.*automatización/,
+        /implementar/,
+        /adelante/,
+        /vamos/
       ];
       
       if (acceptancePatterns.some(pattern => pattern.test(response))) {
