@@ -151,9 +151,9 @@ export function BusinessChatSidebar({ user, currentChatId, onChatSelect, onCreat
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => navigate("/chat")}>
+                <SidebarMenuButton onClick={handleNewChat}>
                   <MessageSquare className="h-4 w-4" />
-                  <span>Chat Técnico</span>
+                  <span>Chat Empresarial</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
