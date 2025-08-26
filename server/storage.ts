@@ -22,7 +22,7 @@ import {
   type InsertTemplate
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -168,7 +168,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessagesBySession(sessionId: string, limit: number = 50): Promise<Message[]> {
-    return await db.select().from(messages).where(eq(messages.chatSessionId, sessionId)).orderBy(desc(messages.createdAt)).limit(limit);
+    return await db.select().from(messages).where(eq(messages.chatSessionId, sessionId)).orderBy(asc(messages.createdAt)).limit(limit);
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
