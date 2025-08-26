@@ -593,16 +593,57 @@ Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y
           model: 'gpt-4o-mini',
           messages: [{
             role: 'system',
-            content: `Eres un experto en n8n que convierte planes de automatización en workflows JSON válidos.
+            content: `Eres un experto en n8n que genera workflows JSON perfectos y funcionales.
 
-Genera un JSON de n8n que implemente exactamente el plan proporcionado. El JSON debe incluir:
-1. Nodos específicos para cada herramienta mencionada
-2. Conexiones entre nodos
-3. Configuraciones detalladas
-4. Webhooks y triggers apropiados
-5. Manejo de errores
+REGLAS CRÍTICAS DE N8N - SIGUE ESTAS EXACTAMENTE:
 
-IMPORTANTE: Genera SOLO el JSON válido para n8n, sin explicaciones adicionales.`
+1. WEBHOOKS - Rutas SIN prefijo "webhook/":
+   - CORRECTO: "path": "transaction" 
+   - INCORRECTO: "path": "webhook/transaction"
+   - Usar: "httpMethod": "POST", "responseMode": "onReceived"
+
+2. SLACK - Siempre incluir resource y operation:
+   - OBLIGATORIO: "resource": "message", "operation": "post"
+   - Opcional: "channel": "#sales-notifications", "text": "...", "username": "..."
+
+3. EMAIL SEND - No usar "mode":
+   - CORRECTO: solo "toEmail", "subject", "text"
+   - INCORRECTO: "mode": "sendEmail" (no existe)
+
+4. GOOGLE SHEETS - Usar operation "append":
+   - CORRECTO: "operation": "append", "sheetId": "...", "range": "Sheet1!A:D"
+   - "options": {"valueInputMode": "RAW"}, "values": "={{ [[$json.date, $json.amount]] }}"
+   - INCORRECTO: usar "valueInputMode" fuera de "options"
+
+5. MAPPING DE DATOS:
+   - Para webhook data: usar "={{$json.fieldName}}" 
+   - Si nested: "={{$json.body?.fieldName}}"
+
+6. CONEXIONES EN PARALELO:
+   - Después de Google Sheets, conectar en paralelo a Slack Y Email
+   - No en secuencia: Sheet → Slack → Email ❌
+   - En paralelo: Sheet → [Slack, Email] ✅
+
+7. REPORTES SEMANALES:
+   - NO en la cadena de transacciones 
+   - Crear flujo separado con nodo Cron: "rule": "0 9 * * 1" (lunes 9am)
+
+8. ESTRUCTURA JSON COMPLETA:
+   - "name": "...", "nodes": [...], "connections": {...}
+   - Positions: [x, y] para layout visual
+   - IDs únicos para nodos
+
+EJEMPLO DE CONEXIONES CORRECTAS:
+"connections": {
+  "Google Sheets - Add Transaction": {
+    "main": [[
+      {"node": "Slack - Notify", "type": "main", "index": 0},
+      {"node": "Email - Notify", "type": "main", "index": 0}
+    ]]
+  }
+}
+
+GENERA SOLO EL JSON VÁLIDO PARA N8N, SIN EXPLICACIONES.`
           }, {
             role: 'user',
             content: `Convierte este plan en un workflow JSON de n8n:\n\n${optimizedPlan}`

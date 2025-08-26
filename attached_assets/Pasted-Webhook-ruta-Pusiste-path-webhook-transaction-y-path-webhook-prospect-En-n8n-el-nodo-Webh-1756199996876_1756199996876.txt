@@ -1,0 +1,201 @@
+Webhook – ruta
+
+Pusiste path: "webhook/transaction" y path: "webhook/prospect".
+En n8n, el nodo Webhook ya construye la URL como /webhook/<path>.
+Arreglo: usa transaction y prospect (sin “webhook/”). 
+
+Slack – falta resource y operation
+
+Tus nodos Slack sólo tienen channel, text, username. El nodo necesita:
+
+"resource": "message",
+"operation": "post"
+
+
+Arreglo: añade esos dos campos y deja channel (idealmente "#sales-notifications"), text, username. 
+
+Email Send – parámetro inválido
+
+Añadiste "mode": "sendEmail". El nodo emailSend no usa mode.
+Arreglo: elimina mode. Deja toEmail, subject, text (y credenciales). 
+
+Google Sheets – estructura de parámetros
+
+Estás usando valueInputMode y un array data[{ range, values }]. Ese patrón no es el habitual del nodo (según versión). Lo estándar es operation: "append" (o “add” en v2) con sheetId, range y values (matriz).
+Arreglo (simple y compatible):
+
+"operation": "append",
+"sheetId": "YOUR_SHEET_ID",
+"range": "Sheet1!A:D",
+"options": { "valueInputMode": "RAW" },
+"values": "={{ [ [$json.date, $json.amount, $json.description, $json.transactionType] ] }}"
+
+
+Y para “Prospects”: range: "Prospects!A:C" y values con [name, email, phone]. 
+
+Resumen “semanal” mal planteado
+
+El nodo Email - Weekly Summary está en la cadena de cada transacción, así que se enviará en cada POST, no semanal.
+Arreglo: crea un nodo Cron semanal que dispare un sub-flujo que lea de Sheets (o calcule) y envíe el resumen. Quita ese email de la cadena del webhook. 
+
+Secuenciación (mejor en paralelo)
+
+Tras escribir en Sheets, lo lógico es notificar en paralelo a Slack y (si quieres) enviar un email. Ahora lo haces en cadena.
+Arreglo: desde “Google Sheets - Add …” saca dos conexiones: a Slack y a Email (parallel fan-out). 
+
+Mapping del payload del Webhook
+
+Usas expresiones tipo {{$json["date"]}}. Eso funcionará si el cuerpo JSON llega en la raíz. Si tu frontend envía JSON como body, deberías mapear {{$json["body"]["date"]}}.
+Arreglo: confirma el payload. Si dudas, usa un nodo Set de prueba o cambia a:
+
+"={{$json.date || $json.body?.date}}"
+
+
+(Si tu versión no soporta ?., usa un ternario: {{$json.date ? $json.date : $json["body"]["date"]}}). 
+
+Credenciales
+
+Normal que el export no las traiga. Pero recuerda asignar credenciales a cada nodo (Slack, Email/SMTP, Sheets) tras importar. 
+
+Versión corregida (esqueleto que sí importa)
+1) Flujo de Transacciones
+{
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "transaction", "responseMode": "onReceived" },
+      "name": "Webhook Transaction",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Sheet1!A:D",
+        "options": { "valueInputMode": "RAW" },
+        "values": "={{ [ [ $json.date, $json.amount, $json.description, $json.transactionType ] ] }}"
+      },
+      "name": "Google Sheets - Add Transaction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#sales-notifications",
+        "text": "Nueva transacción: {{$json.description}} por {{$json.amount}}",
+        "username": "SalesBot"
+      },
+      "name": "Slack - Notify Transaction",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [650, 240]
+    },
+    {
+      "parameters": {
+        "toEmail": "team@asd.com",
+        "subject": "Nueva transacción registrada",
+        "text": "Se registró: {{$json.description}} por {{$json.amount}}"
+      },
+      "name": "Email - Notify Transaction",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [650, 360]
+    }
+  ],
+  "connections": {
+    "Webhook Transaction": {
+      "main": [[{ "node": "Google Sheets - Add Transaction", "type": "main", "index": 0 }]]
+    },
+    "Google Sheets - Add Transaction": {
+      "main": [[
+        { "node": "Slack - Notify Transaction", "type": "main", "index": 0 },
+        { "node": "Email - Notify Transaction", "type": "main", "index": 0 }
+      ]]
+    }
+  }
+}
+
+2) Flujo de Prospectos
+{
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "prospect", "responseMode": "onReceived" },
+      "name": "Webhook Prospect",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 100]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Prospects!A:C",
+        "options": { "valueInputMode": "RAW" },
+        "values": "={{ [ [ $json.name, $json.email, $json.phone ] ] }}"
+      },
+      "name": "Google Sheets - Add Prospect",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [450, 100]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#sales-notifications",
+        "text": "Nuevo prospecto: {{$json.name}} ({{$json.email}})",
+        "username": "SalesBot"
+      },
+      "name": "Slack - Notify Prospect",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [650, 60]
+    },
+    {
+      "parameters": {
+        "toEmail": "team@asd.com",
+        "subject": "Nuevo Prospecto",
+        "text": "Se registró un prospecto: {{$json.name}}"
+      },
+      "name": "Email - Notify New Prospect",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [650, 140]
+    }
+  ],
+  "connections": {
+    "Webhook Prospect": {
+      "main": [[{ "node": "Google Sheets - Add Prospect", "type": "main", "index": 0 }]]
+    },
+    "Google Sheets - Add Prospect": {
+      "main": [[
+        { "node": "Slack - Notify Prospect", "type": "main", "index": 0 },
+        { "node": "Email - Notify New Prospect", "type": "main", "index": 0 }
+      ]]
+    }
+  }
+}
+
+3) Resumen semanal (flujo aparte)
+
+Añade un nodo Cron (FREQ=WEEKLY) → lee de Sheets (o de tu DB) → genera resumen → Email Send a team@asd.com.
+
+Checklist rápido
+
+ Cambia rutas de Webhook a transaction / prospect.
+
+ Slack con resource:"message" y operation:"post".
+
+ Email sin mode.
+
+ Google Sheets con operation:"append" y values.
+
+ Revisa mapping del payload ($json.date vs $json.body.date).
+
+ Mueve el resumen semanal a un flujo con Cron.
+
+ Asigna credenciales a todos los nodos.
