@@ -595,51 +595,127 @@ Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y
             role: 'system',
             content: `Eres un experto en n8n que genera workflows JSON perfectos y funcionales.
 
-REGLAS CRÍTICAS DE N8N - SIGUE ESTAS EXACTAMENTE:
+REGLAS CRÍTICAS DE N8N - CORREGIDAS DESDE ERRORES REALES:
 
-1. WEBHOOKS - Rutas SIN prefijo "webhook/":
-   - CORRECTO: "path": "transaction" 
-   - INCORRECTO: "path": "webhook/transaction"
-   - Usar: "httpMethod": "POST", "responseMode": "onReceived"
+1. WEBHOOKS - Configuración segura:
+   - CORRECTO: "path": "transaction" (SIN prefijo "webhook/")
+   - OBLIGATORIO: "httpMethod": "POST", "responseMode": "onReceived"
+   - SIEMPRE agregar nodo "Respond to Webhook" para dar feedback al cliente
+   - OPCIONAL: authentication: {"type": "headerAuth", "name": "Authorization"}
 
-2. SLACK - Siempre incluir resource y operation:
+2. GOOGLE SHEETS - Array bidimensional OBLIGATORIO:
+   - ❌ INCORRECTO: "values": "={{ [$json.query, $json.timestamp] }}"
+   - ✅ CORRECTO: "values": "={{ [ [ $json[\"body\"][\"query\"], $json[\"body\"][\"timestamp\"] ] ] }}"
+   - OBLIGATORIO: "operation": "append"
+   - USAR ID REAL: "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" (NO placeholders)
+   - "options": {"valueInputMode": "RAW"}, "range": "Sheet1!A:Z"
+
+3. SLACK - Sin símbolo # en canal:
+   - ✅ CORRECTO: "channel": "customer-support" (SIN #)
+   - ❌ INCORRECTO: "channel": "#customer-support"
    - OBLIGATORIO: "resource": "message", "operation": "post"
-   - Opcional: "channel": "#sales-notifications", "text": "...", "username": "..."
 
-3. EMAIL SEND - No usar "mode":
-   - CORRECTO: solo "toEmail", "subject", "text"
-   - INCORRECTO: "mode": "sendEmail" (no existe)
+4. EMAIL - Configuración completa:
+   - OBLIGATORIO: "toEmail": "support@company.com", "fromEmail": "alerts@company.com"
+   - OBLIGATORIO: "subject": "Nueva consulta", "text": "..."
+   - ❌ NUNCA usar: "mode": "sendEmail" (no existe)
 
-4. GOOGLE SHEETS - Usar operation "append":
-   - CORRECTO: "operation": "append", "sheetId": "...", "range": "Sheet1!A:D"
-   - "options": {"valueInputMode": "RAW"}, "values": "={{ [[$json.date, $json.amount]] }}"
-   - INCORRECTO: usar "valueInputMode" fuera de "options"
+5. MAPPING DE DATOS - Sintaxis segura:
+   - ✅ CORRECTO: "={{$json[\"body\"][\"query\"]}}" 
+   - ❌ INCORRECTO: "={{$json.body?.query}}" (optional chaining problemático)
+   - Para datos simples: "={{$json[\"fieldName\"]}}"
 
-5. MAPPING DE DATOS:
-   - Para webhook data: usar "={{$json.fieldName}}" 
-   - Si nested: "={{$json.body?.fieldName}}"
+6. MANEJO DE ERRORES - OBLIGATORIO:
+   - Agregar "continueOnFail": true a nodos críticos
+   - Conectar nodos de error: "onError" connections
+   - Ejemplo: si Sheets falla, que Slack aún notifique
 
-6. CONEXIONES EN PARALELO:
-   - Después de Google Sheets, conectar en paralelo a Slack Y Email
-   - No en secuencia: Sheet → Slack → Email ❌
-   - En paralelo: Sheet → [Slack, Email] ✅
+7. ESTRUCTURA DE RESPUESTA - SIEMPRE incluir:
+   - Nodo "Respond to Webhook" después del webhook
+   - "parameters": {"responseBody": "={{JSON.stringify({status: 'received', message: 'Query processed'})}}"}
+   - "headers": {"Content-Type": "application/json"}
 
-7. REPORTES SEMANALES:
-   - NO en la cadena de transacciones 
-   - Crear flujo separado con nodo Cron: "rule": "0 9 * * 1" (lunes 9am)
+8. CONEXIONES CORRECTAS:
+   - Webhook → [Google Sheets, Respond to Webhook] (paralelo)
+   - Google Sheets → [Slack, Email] (paralelo tras sheets)
+   - NUNCA: Webhook → Sheets → Slack → Email (secuencial malo)
 
-8. ESTRUCTURA JSON COMPLETA:
-   - "name": "...", "nodes": [...], "connections": {...}
-   - Positions: [x, y] para layout visual
-   - IDs únicos para nodos
+9. ESTRUCTURA JSON COMPLETA:
+   - OBLIGATORIO: "name", "nodes", "connections"
+   - Positions: [x, y] válidas para layout
+   - IDs únicos descriptivos
 
-EJEMPLO DE CONEXIONES CORRECTAS:
-"connections": {
-  "Google Sheets - Add Transaction": {
-    "main": [[
-      {"node": "Slack - Notify", "type": "main", "index": 0},
-      {"node": "Email - Notify", "type": "main", "index": 0}
-    ]]
+EJEMPLO CORRECTO COMPLETO:
+{
+  "name": "Customer Support Automation",
+  "nodes": [
+    {
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "path": "support-query",
+        "httpMethod": "POST"
+      },
+      "position": [240, 300]
+    },
+    {
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "parameters": {
+        "operation": "append",
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Sheet1!A:C",
+        "options": {"valueInputMode": "RAW"},
+        "values": "={{ [ [ $json[\"body\"][\"query\"], $json[\"body\"][\"timestamp\"], $json[\"body\"][\"email\"] ] ] }}"
+      },
+      "position": [460, 300],
+      "continueOnFail": true
+    },
+    {
+      "name": "Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "customer-support",
+        "text": "Nueva consulta: ={{$json[\"body\"][\"query\"]}}"
+      },
+      "position": [680, 200]
+    },
+    {
+      "name": "Email Notify",
+      "type": "n8n-nodes-base.emailSend",
+      "parameters": {
+        "toEmail": "support@company.com",
+        "fromEmail": "alerts@company.com",
+        "subject": "Nueva consulta de soporte",
+        "text": "Query: ={{$json[\"body\"][\"query\"]}}"
+      },
+      "position": [680, 400]
+    },
+    {
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {
+        "responseBody": "={{JSON.stringify({status: 'received', message: 'Query processed successfully'})}}",
+        "headers": {"Content-Type": "application/json"}
+      },
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[
+        {"node": "Google Sheets", "type": "main", "index": 0},
+        {"node": "Respond to Webhook", "type": "main", "index": 0}
+      ]]
+    },
+    "Google Sheets": {
+      "main": [[
+        {"node": "Slack Notify", "type": "main", "index": 0},
+        {"node": "Email Notify", "type": "main", "index": 0}
+      ]]
+    }
   }
 }
 

@@ -1,0 +1,93 @@
+Errores / Problemas Técnicos
+
+Uso incorrecto de values en Google Sheets
+
+"values": "={{ [$json.body?.query, $json.body?.timestamp] }}"
+
+
+❌ values espera un array bidimensional (matriz), no una cadena.
+
+Así como está, dará error porque lo está interpretando como texto.
+
+✅ Lo correcto sería:
+
+"values": "={{ [ [ $json[\"body\"][\"query\"], $json[\"body\"][\"timestamp\"] ] ] }}"
+
+
+Eso asegura que se pase como fila [col1, col2].
+
+sheetId placeholder no válido
+
+"sheetId": "your_sheet_id"
+
+
+❌ Esto es solo un placeholder, no funcionará.
+
+✅ Debes reemplazarlo con el ID real de tu Google Sheet (el largo que aparece en la URL entre /d/ y /edit).
+
+Campo channel en Slack
+
+"channel": "#customer-support"
+
+
+En algunas workspaces de Slack ya no se aceptan canales con #, solo el nombre o el ID del canal.
+
+Si tu Slack no lo reconoce, cambiar a "channel": "customer-support" o usar el channel ID.
+
+Email - Notify configuración mínima
+
+"toEmail": "support@yourcompany.com"
+
+
+Si no tienes configurado el SMTP / credenciales en n8n, este nodo fallará.
+
+También deberías agregar fromEmail (en algunos setups es obligatorio).
+
+Webhook sin autenticación ni validación
+
+"httpMethod": "POST"
+
+
+❌ Cualquiera que sepa la URL del webhook podría enviar datos.
+
+✅ Recomendado: activar autenticación o un secret token en la configuración.
+
+⚠️ Problemas de Buenas Prácticas
+
+Respuesta del Webhook
+
+Está configurado con "responseMode": "onReceived", pero no devuelve nada al cliente.
+
+✅ Mejor: agregar un nodo “Respond to Webhook” para confirmar al usuario que el query fue recibido.
+
+Falta de control de errores
+
+Si Slack falla, Sheets falla o Email falla, todo el flujo se rompe.
+
+✅ Recomendación: añadir nodos de Error Workflow o “Continue On Fail” con logs.
+
+Uso de propiedades con ?. (Optional Chaining)
+
+En n8n, {{$json.body?.query}} puede no funcionar como esperas en todas versiones.
+
+✅ Más seguro: {{$json["body"]["query"]}}
+
+Falta de separación lógica
+
+Ahora el webhook dispara tres acciones en paralelo (Slack, Sheets, Email).
+
+Si necesitas orden (ej. primero loguear, luego notificar), deberías conectar nodos en secuencia.
+
+✅ Recomendaciones finales
+
+Arreglar la estructura de valores en Google Sheets.
+
+Usar un sheetId válido.
+
+Revisar Slack channel (nombre vs ID).
+
+Agregar un nodo Respond to Webhook para que el cliente no quede sin feedback.
+
+Configurar SMTP completo en Email - Notify.
+
+Añadir manejo de errores (por ejemplo, si Sheets falla, que Slack aún envíe la notificación).
