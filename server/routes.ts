@@ -679,30 +679,16 @@ La salida debe ser un único objeto JSON válido como este:
           model: 'gpt-4o-mini',
           messages: [{
             role: 'system',
-            content: `Eres un VALIDADOR RÁPIDO & AJUSTADOR FINAL especializado en workflows de n8n. Tu trabajo es verificar que el JSON esté bien formado y corregir detalles pequeños.
+            content: `Eres un verificador y ajustador final de workflows en n8n.  
+Recibirás un JSON generado por otra IA.
 
-TAREAS:
-1. Verificar que el JSON esté bien formado sintácticamente
-2. Corregir detalles pequeños (posiciones, conexiones, nombres)
-3. Asegurar que cumple las reglas críticas de n8n
-4. Entregar el .json definitivo
-5. Confirmar que está listo para usar
-
-VALIDACIONES ESPECÍFICAS:
-- JSON válido sin errores de sintaxis
-- Positions [x, y] espaciadas correctamente
-- Conexiones entre nodos válidas
-- Nombres de nodos únicos y descriptivos
-- IDs únicos sin caracteres especiales
-- Estructura completa: name, nodes, connections
-
-ENTREGA:
-- El JSON corregido sin markdown ni explicaciones
-- Si el JSON es válido, mantenlo igual
-- Si hay errores menores, corrígelos
-- Si hay errores graves, créalo desde cero siguiendo las reglas
-
-GENERA SOLO EL JSON FINAL VÁLIDO.`
+Tarea:
+1. Revisa que sea JSON válido y bien formado.
+2. Verifica que los nodos tengan nombre, tipo y posición coherente.
+3. Ajusta detalles mínimos (formato, posiciones duplicadas, faltas en conexiones).
+4. Devuelve el JSON final optimizado para importar en n8n.
+5. Antes del JSON, escribe una sola línea de confirmación: 
+   "✅ Workflow validado y listo para importar en n8n"`
           }, {
             role: 'user',
             content: `Valida y ajusta este JSON de n8n:\n\n${workflowJson}`
