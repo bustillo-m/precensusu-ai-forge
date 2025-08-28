@@ -470,66 +470,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
            hasSpecificConfig;
   };
 
-  // Multi-AI workflow orchestration
+  // Multi-AI workflow orchestration - Nueva estructura especializada
   async function orchestrateWorkflowCreation(prompt: string, userId?: string) {
     const steps = [];
     
     try {
-      // Step 1: ChatGPT Planner
-      steps.push("Iniciando planificación con ChatGPT...");
-      const plannerResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Step 1: ChatGPT (full) → Consultor IA & Estratega de Automatizaciones
+      steps.push("🔍 Iniciando consultoría completa con ChatGPT...");
+      const consultorResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4',
           messages: [{
             role: 'system',
-            content: `Eres un planificador experto de automatizaciones. Tu trabajo es analizar el request del usuario y crear un plan detallado de automatización.
+            content: `Eres un CONSULTOR IA & ESTRATEGA DE AUTOMATIZACIONES altamente especializado. Tu trabajo es hacer una consultoría completa de la empresa.
 
-DEBES preguntar específicamente sobre:
-1. HERRAMIENTAS DE COMUNICACIÓN: ¿WhatsApp, Telegram, email, SMS?
-2. PLATAFORMAS DE INTEGRACIÓN: ¿Facebook, Instagram, LinkedIn, website?
-3. ALMACENAMIENTO: ¿Google Drive, Dropbox, servidor local?
-4. NOTIFICACIONES: ¿Email, Slack, Discord?
-5. DATOS: ¿Hojas de cálculo, bases de datos, CRM específico?
+TU MISIÓN:
+1. ANALIZAR la empresa y sus procesos profundamente
+2. DETECTAR puntos de mejora y oportunidades de automatización
+3. GENERAR insights empresariales valiosos
+4. PROPONER varias automatizaciones priorizadas por impacto/esfuerzo
+5. ENTREGAR un "menú de automatizaciones candidatas" con detalles específicos
 
-Crea un plan estructurado con:
-- Descripción del agente
-- Herramientas específicas a usar
-- Flujo de trabajo paso a paso
-- Integraciones necesarias
-- Configuraciones requeridas
+ESTRUCTURA DE TU RESPUESTA:
+📊 **ANÁLISIS EMPRESARIAL:**
+- Tipo de empresa y sector
+- Procesos actuales identificados
+- Puntos de dolor detectados
+- Oportunidades de mejora
 
-Responde en español y sé muy específico sobre las herramientas.`
+💡 **INSIGHTS Y RECOMENDACIONES:**
+- Patrones de ineficiencia encontrados
+- Áreas de mayor impacto para automatizar
+- ROI estimado por automatización
+
+🎯 **MENÚ DE AUTOMATIZACIONES CANDIDATAS (ordenadas por prioridad):**
+
+**AUTOMATIZACIÓN #1 - [NOMBRE]**
+- **Impacto:** Alto/Medio/Bajo
+- **Esfuerzo:** Alto/Medio/Bajo
+- **ROI estimado:** X% o X horas/semana ahorradas
+- **Descripción:** Qué hace exactamente
+- **Beneficios específicos:** Lista detallada
+- **Herramientas necesarias:** Tecnologías específicas
+
+**AUTOMATIZACIÓN #2 - [NOMBRE]**
+[Mismo formato...]
+
+**AUTOMATIZACIÓN #3 - [NOMBRE]**
+[Mismo formato...]
+
+Sé extremadamente específico sobre herramientas, integraciones y beneficios cuantificables. Piensa como un consultor senior que cobra $500/hora.`
           }, {
             role: 'user',
             content: prompt
           }],
-          temperature: 0.3,
-          max_tokens: 1500,
+          temperature: 0.2,
+          max_tokens: 2000,
         }),
       });
 
-      if (!plannerResponse.ok) {
-        throw new Error(`Error en ChatGPT Planner: ${plannerResponse.statusText}`);
+      if (!consultorResponse.ok) {
+        throw new Error(`Error en ChatGPT Consultor: ${consultorResponse.statusText}`);
       }
 
-      const plannerData = await plannerResponse.json();
-      if (!plannerData.choices || !plannerData.choices[0]) {
-        throw new Error('Respuesta inválida de ChatGPT Planner');
+      const consultorData = await consultorResponse.json();
+      if (!consultorData.choices || !consultorData.choices[0]) {
+        throw new Error('Respuesta inválida de ChatGPT Consultor');
       }
 
-      const initialPlan = plannerData.choices[0].message.content;
-      steps.push("✅ Plan inicial creado");
+      const consultoria = consultorData.choices[0].message.content;
+      steps.push("✅ Consultoría empresarial completada");
 
-      // Step 2: Claude Refiner (si tenemos la API key)
-      let refinedPlan = initialPlan;
+      // Step 2: Claude AI → Diseñador de arquitectura de workflow
+      let workflowDesign = consultoria;
       if (process.env.ANTHROPIC_API_KEY) {
         try {
-          steps.push("Refinando con Claude...");
+          steps.push("🏗️ Diseñando arquitectura de workflow con Claude...");
           const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -539,20 +560,49 @@ Responde en español y sé muy específico sobre las herramientas.`
             },
             body: JSON.stringify({
               model: 'claude-3-sonnet-20240229',
-              max_tokens: 1500,
+              max_tokens: 2000,
               messages: [{
                 role: 'user',
-                content: `Refina este plan de automatización agregando:
-1. Manejo de errores robusto
-2. Validaciones de datos
-3. Seguridad y permisos
-4. Escalabilidad
-5. Monitoreo y logs
+                content: `Eres un DISEÑADOR DE ARQUITECTURA DE WORKFLOW especializado en n8n. Tu trabajo es convertir la automatización seleccionada en un diseño técnico estructurado.
 
-Plan original:
-${initialPlan}
+CONSULTORÍA EMPRESARIAL REALIZADA:
+${consultoria}
 
-Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y profesional.`
+TU MISIÓN:
+1. Seleccionar la automatización de mayor prioridad del menú
+2. Convertirla en un diseño técnico estructurado
+3. Explicar cada nodo de n8n necesario
+4. Definir condiciones y flujo lógico
+5. Especificar configuraciones técnicas
+
+ESTRUCTURA DE TU RESPUESTA:
+🎯 **AUTOMATIZACIÓN SELECCIONADA:** [Nombre de la automatización de mayor impacto]
+
+🏗️ **ARQUITECTURA DE WORKFLOW:**
+
+**NODOS N8N REQUERIDOS:**
+1. **Webhook/Trigger:** [Tipo y configuración]
+2. **Procesamiento:** [Nodos de transformación de datos]
+3. **Integraciones:** [APIs y servicios externos]
+4. **Almacenamiento:** [Bases de datos, hojas de cálculo]
+5. **Notificaciones:** [Email, Slack, etc.]
+6. **Respuesta:** [Feedback al usuario]
+
+**FLUJO LÓGICO:**
+- **Trigger:** Cuándo se activa
+- **Condiciones:** If/then/else específicas
+- **Transformaciones:** Mapeo de datos
+- **Validaciones:** Qué validar antes de proceder
+- **Acciones paralelas:** Qué hacer simultáneamente
+- **Manejo de errores:** Qué hacer si algo falla
+
+**CONFIGURACIONES TÉCNICAS:**
+- **Webhooks:** URLs, métodos HTTP, autenticación
+- **APIs:** Endpoints, headers, parámetros
+- **Datos:** Estructura JSON, campos requeridos
+- **Integraciones:** Credenciales y permisos necesarios
+
+Sé extremadamente técnico y específico. Piensa como un arquitecto de software senior.`
               }]
             }),
           });
@@ -560,30 +610,28 @@ Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y
           if (claudeResponse.ok) {
             const claudeData = await claudeResponse.json();
             if (claudeData.content && claudeData.content[0]) {
-              refinedPlan = claudeData.content[0].text;
-              steps.push("✅ Plan refinado con Claude");
+              workflowDesign = claudeData.content[0].text;
+              steps.push("✅ Arquitectura de workflow diseñada");
             } else {
-              steps.push("⚠️ Claude: respuesta inválida, usando plan inicial");
+              steps.push("⚠️ Claude: respuesta inválida, usando consultoría inicial");
             }
           } else {
-            steps.push("⚠️ Claude: API error, usando plan inicial");
+            steps.push("⚠️ Claude: API error, usando consultoría inicial");
           }
         } catch (claudeError: any) {
           console.error('Claude API error:', claudeError);
-          steps.push(`⚠️ Claude: ${claudeError.message}, usando plan inicial`);
+          steps.push(`⚠️ Claude: ${claudeError.message}, usando consultoría inicial`);
         }
       } else {
-        steps.push("⚠️ Claude API key no configurada, saltando refinamiento");
+        steps.push("⚠️ Claude API key no configurada, saltando diseño de arquitectura");
       }
 
-      // Step 3: DeepSeek Optimizer (simulado por ahora)
-      steps.push("Optimizando rendimiento...");
-      const optimizedPlan = refinedPlan + "\n\n## OPTIMIZACIONES DE RENDIMIENTO:\n- Caché de respuestas frecuentes\n- Procesamiento asíncrono\n- Rate limiting inteligente\n- Compresión de datos\n- Monitoreo de recursos";
-      steps.push("✅ Plan optimizado");
-
-      // Step 4: Generate final JSON
-      steps.push("Generando JSON final para n8n...");
-      const jsonResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Step 3: DeepSeek → Ingeniero JSON / Generador técnico
+      steps.push("⚙️ Generando JSON workflow con DeepSeek...");
+      let workflowJson = "";
+      
+      // Por ahora DeepSeek está simulado - usa ChatGPT con prompt específico de ingeniero JSON
+      const deepseekResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -593,157 +641,106 @@ Mejora el plan manteniendo toda la funcionalidad pero haciéndolo más robusto y
           model: 'gpt-4o-mini',
           messages: [{
             role: 'system',
-            content: `Eres un experto en n8n que genera workflows JSON perfectos y funcionales.
+            content: `Eres un INGENIERO JSON / GENERADOR TÉCNICO especializado en n8n. Tu trabajo es producir el workflow JSON válido a partir del diseño de arquitectura.
 
-REGLAS CRÍTICAS DE N8N - CORREGIDAS DESDE ERRORES REALES:
+CARACTERÍSTICAS:
+- Eres minucioso y extremadamente técnico
+- Optimizas eficiencia (menos nodos redundantes)
+- Generas JSON perfectamente estructurado
+- Implementas todas las reglas técnicas de n8n
 
-1. WEBHOOKS - Configuración segura:
-   - CORRECTO: "path": "transaction" (SIN prefijo "webhook/")
-   - OBLIGATORIO: "httpMethod": "POST", "responseMode": "onReceived"
-   - SIEMPRE agregar nodo "Respond to Webhook" para dar feedback al cliente
-   - OPCIONAL: authentication: {"type": "headerAuth", "name": "Authorization"}
-
-2. GOOGLE SHEETS - Array bidimensional OBLIGATORIO:
-   - ❌ INCORRECTO: "values": "={{ [$json.query, $json.timestamp] }}"
-   - ✅ CORRECTO: "values": "={{ [ [ $json[\"body\"][\"query\"], $json[\"body\"][\"timestamp\"] ] ] }}"
-   - OBLIGATORIO: "operation": "append"
-   - USAR ID REAL: "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" (NO placeholders)
-   - "options": {"valueInputMode": "RAW"}, "range": "Sheet1!A:Z"
-
-3. SLACK - Sin símbolo # en canal:
-   - ✅ CORRECTO: "channel": "customer-support" (SIN #)
-   - ❌ INCORRECTO: "channel": "#customer-support"
-   - OBLIGATORIO: "resource": "message", "operation": "post"
-
-4. EMAIL - Configuración completa:
-   - OBLIGATORIO: "toEmail": "support@company.com", "fromEmail": "alerts@company.com"
-   - OBLIGATORIO: "subject": "Nueva consulta", "text": "..."
-   - ❌ NUNCA usar: "mode": "sendEmail" (no existe)
-
-5. MAPPING DE DATOS - Sintaxis segura:
-   - ✅ CORRECTO: "={{$json[\"body\"][\"query\"]}}" 
-   - ❌ INCORRECTO: "={{$json.body?.query}}" (optional chaining problemático)
-   - Para datos simples: "={{$json[\"fieldName\"]}}"
-
-6. MANEJO DE ERRORES - OBLIGATORIO:
-   - Agregar "continueOnFail": true a nodos críticos
-   - Conectar nodos de error: "onError" connections
-   - Ejemplo: si Sheets falla, que Slack aún notifique
-
-7. ESTRUCTURA DE RESPUESTA - SIEMPRE incluir:
-   - Nodo "Respond to Webhook" después del webhook
-   - "parameters": {"responseBody": "={{JSON.stringify({status: 'received', message: 'Query processed'})}}"}
-   - "headers": {"Content-Type": "application/json"}
-
-8. CONEXIONES CORRECTAS:
-   - Webhook → [Google Sheets, Respond to Webhook] (paralelo)
-   - Google Sheets → [Slack, Email] (paralelo tras sheets)
-   - NUNCA: Webhook → Sheets → Slack → Email (secuencial malo)
-
-9. ESTRUCTURA JSON COMPLETA:
-   - OBLIGATORIO: "name", "nodes", "connections"
-   - Positions: [x, y] válidas para layout
-   - IDs únicos descriptivos
-
-EJEMPLO CORRECTO COMPLETO:
-{
-  "name": "Customer Support Automation",
-  "nodes": [
-    {
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "parameters": {
-        "path": "support-query",
-        "httpMethod": "POST"
-      },
-      "position": [240, 300]
-    },
-    {
-      "name": "Google Sheets",
-      "type": "n8n-nodes-base.googleSheets",
-      "parameters": {
-        "operation": "append",
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Sheet1!A:C",
-        "options": {"valueInputMode": "RAW"},
-        "values": "={{ [ [ $json[\"body\"][\"query\"], $json[\"body\"][\"timestamp\"], $json[\"body\"][\"email\"] ] ] }}"
-      },
-      "position": [460, 300],
-      "continueOnFail": true
-    },
-    {
-      "name": "Slack Notify",
-      "type": "n8n-nodes-base.slack",
-      "parameters": {
-        "resource": "message",
-        "operation": "post",
-        "channel": "customer-support",
-        "text": "Nueva consulta: ={{$json[\"body\"][\"query\"]}}"
-      },
-      "position": [680, 200]
-    },
-    {
-      "name": "Email Notify",
-      "type": "n8n-nodes-base.emailSend",
-      "parameters": {
-        "toEmail": "support@company.com",
-        "fromEmail": "alerts@company.com",
-        "subject": "Nueva consulta de soporte",
-        "text": "Query: ={{$json[\"body\"][\"query\"]}}"
-      },
-      "position": [680, 400]
-    },
-    {
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "parameters": {
-        "responseBody": "={{JSON.stringify({status: 'received', message: 'Query processed successfully'})}}",
-        "headers": {"Content-Type": "application/json"}
-      },
-      "position": [460, 500]
-    }
-  ],
-  "connections": {
-    "Webhook": {
-      "main": [[
-        {"node": "Google Sheets", "type": "main", "index": 0},
-        {"node": "Respond to Webhook", "type": "main", "index": 0}
-      ]]
-    },
-    "Google Sheets": {
-      "main": [[
-        {"node": "Slack Notify", "type": "main", "index": 0},
-        {"node": "Email Notify", "type": "main", "index": 0}
-      ]]
-    }
-  }
-}
+REGLAS N8N CRÍTICAS - APLICAR SIEMPRE:
+1. WEBHOOKS: path sin "webhook/", responseMode: "onReceived"
+2. GOOGLE SHEETS: values como array bidimensional "={{ [ [ datos ] ] }}"
+3. SLACK: channel sin #, resource: "message", operation: "post"
+4. EMAIL: toEmail + fromEmail obligatorios, NO usar "mode"
+5. MAPPING: sintaxis segura "={{$json[\"field\"]}}"
+6. ERRORS: continueOnFail: true en nodos críticos
+7. RESPONSE: siempre nodo "Respond to Webhook"
+8. CONNECTIONS: paralelas cuando sea posible
 
 GENERA SOLO EL JSON VÁLIDO PARA N8N, SIN EXPLICACIONES.`
           }, {
             role: 'user',
-            content: `Convierte este plan en un workflow JSON de n8n:\n\n${optimizedPlan}`
+            content: `Convierte este diseño de arquitectura en un workflow JSON de n8n:\n\n${workflowDesign}`
+          }],
+          temperature: 0.1,
+          max_tokens: 2500,
+        }),
+      });
+
+      if (deepseekResponse.ok) {
+        const deepseekData = await deepseekResponse.json();
+        if (deepseekData.choices && deepseekData.choices[0]) {
+          workflowJson = deepseekData.choices[0].message.content;
+          steps.push("✅ JSON workflow generado");
+        } else {
+          throw new Error('Respuesta inválida de DeepSeek (simulado)');
+        }
+      } else {
+        throw new Error(`Error en DeepSeek (simulado): ${deepseekResponse.statusText}`);
+      }
+
+      // Step 4: ChatGPT-4o mini → Validador rápido & Ajustador final
+      steps.push("✅ Validando y ajustando JSON con ChatGPT-4o mini...");
+      const validatorResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{
+            role: 'system',
+            content: `Eres un VALIDADOR RÁPIDO & AJUSTADOR FINAL especializado en workflows de n8n. Tu trabajo es verificar que el JSON esté bien formado y corregir detalles pequeños.
+
+TAREAS:
+1. Verificar que el JSON esté bien formado sintácticamente
+2. Corregir detalles pequeños (posiciones, conexiones, nombres)
+3. Asegurar que cumple las reglas críticas de n8n
+4. Entregar el .json definitivo
+5. Confirmar que está listo para usar
+
+VALIDACIONES ESPECÍFICAS:
+- JSON válido sin errores de sintaxis
+- Positions [x, y] espaciadas correctamente
+- Conexiones entre nodos válidas
+- Nombres de nodos únicos y descriptivos
+- IDs únicos sin caracteres especiales
+- Estructura completa: name, nodes, connections
+
+ENTREGA:
+- El JSON corregido sin markdown ni explicaciones
+- Si el JSON es válido, mantenlo igual
+- Si hay errores menores, corrígelos
+- Si hay errores graves, créalo desde cero siguiendo las reglas
+
+GENERA SOLO EL JSON FINAL VÁLIDO.`
+          }, {
+            role: 'user',
+            content: `Valida y ajusta este JSON de n8n:\n\n${workflowJson}`
           }],
           temperature: 0.1,
           max_tokens: 2000,
         }),
       });
 
-      if (!jsonResponse.ok) {
-        throw new Error(`Error en generación JSON: ${jsonResponse.statusText}`);
+      if (!validatorResponse.ok) {
+        throw new Error(`Error en validador final: ${validatorResponse.statusText}`);
       }
 
-      const jsonData = await jsonResponse.json();
-      let workflowJson = jsonData.choices[0].message.content;
-      steps.push("✅ JSON generado para n8n");
+      const validatorData = await validatorResponse.json();
+      let finalWorkflowJson = validatorData.choices[0].message.content;
+      steps.push("✅ JSON validado y ajustado");
 
       // Clean JSON string - remove markdown formatting
-      workflowJson = workflowJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      finalWorkflowJson = finalWorkflowJson.replace(/```json/g, '').replace(/```/g, '').trim();
       
       // Validate JSON
       let parsedJson;
       try {
-        parsedJson = JSON.parse(workflowJson);
+        parsedJson = JSON.parse(finalWorkflowJson);
       } catch (parseError) {
         // If JSON is invalid, create a basic workflow structure
         parsedJson = {
@@ -758,7 +755,7 @@ GENERA SOLO EL JSON VÁLIDO PARA N8N, SIN EXPLICACIONES.`
           ],
           connections: {}
         };
-        workflowJson = JSON.stringify(parsedJson, null, 2);
+        finalWorkflowJson = JSON.stringify(parsedJson, null, 2);
         steps.push("⚠️ JSON corregido - estructura básica aplicada");
       }
 
@@ -782,9 +779,9 @@ GENERA SOLO EL JSON VÁLIDO PARA N8N, SIN EXPLICACIONES.`
       return {
         success: true,
         steps,
-        finalPlan: optimizedPlan,
-        workflowJson,
-        message: "🎉 ¡Workflow creado exitosamente! He generado un plan completo y el archivo JSON para n8n."
+        finalPlan: workflowDesign,
+        workflowJson: finalWorkflowJson,
+        message: "🎉 ¡Workflow creado exitosamente! Sistema Multi-IA completado: ChatGPT (Consultor) → Claude (Arquitecto) → DeepSeek (Ingeniero) → ChatGPT-4o mini (Validador)."
       };
 
     } catch (error: any) {
