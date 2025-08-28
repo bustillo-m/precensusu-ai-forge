@@ -560,46 +560,33 @@ Tu tarea es realizar una consultoría con el cliente para entender su empresa, p
               max_tokens: 2000,
               messages: [{
                 role: 'user',
-                content: `Eres un DISEÑADOR DE ARQUITECTURA DE WORKFLOW especializado en n8n. Tu trabajo es convertir la automatización seleccionada en un diseño técnico estructurado.
+                content: `Eres un arquitecto de automatizaciones experto en n8n.  
+Recibirás un JSON con una automatización seleccionada por el cliente.  
+
+Tarea:
+1. Convierte esa descripción en un diseño técnico detallado de workflow en n8n.
+2. Identifica:
+   - Nodos requeridos (triggers, acciones, transformadores, condicionales, errores).
+   - Configuración de cada nodo (parámetros principales).
+   - Flujo lógico paso a paso de los datos.
+   - Manejo de excepciones o errores (qué pasa si un paso falla).
+   - Posibles variables dinámicas necesarias.
+
+3. Propón nombres cortos y claros para cada nodo (ej: "Trigger_Gmail", "Guardar_Drive", "Notificar_Slack").
+
+Devuelve la salida en JSON:
+{
+ "nodos_requeridos": [
+   {"tipo": "Trigger", "nombre": "...", "detalle": "..."},
+   {"tipo": "Accion", "nombre": "...", "detalle": "..."},
+   {"tipo": "Condicion", "nombre": "...", "detalle": "..."}
+ ],
+ "flujo_logico": "Descripción paso a paso",
+ "manejo_errores": "..."
+}
 
 CONSULTORÍA EMPRESARIAL REALIZADA:
-${consultoria}
-
-TU MISIÓN:
-1. Seleccionar la automatización de mayor prioridad del menú
-2. Convertirla en un diseño técnico estructurado
-3. Explicar cada nodo de n8n necesario
-4. Definir condiciones y flujo lógico
-5. Especificar configuraciones técnicas
-
-ESTRUCTURA DE TU RESPUESTA:
-🎯 **AUTOMATIZACIÓN SELECCIONADA:** [Nombre de la automatización de mayor impacto]
-
-🏗️ **ARQUITECTURA DE WORKFLOW:**
-
-**NODOS N8N REQUERIDOS:**
-1. **Webhook/Trigger:** [Tipo y configuración]
-2. **Procesamiento:** [Nodos de transformación de datos]
-3. **Integraciones:** [APIs y servicios externos]
-4. **Almacenamiento:** [Bases de datos, hojas de cálculo]
-5. **Notificaciones:** [Email, Slack, etc.]
-6. **Respuesta:** [Feedback al usuario]
-
-**FLUJO LÓGICO:**
-- **Trigger:** Cuándo se activa
-- **Condiciones:** If/then/else específicas
-- **Transformaciones:** Mapeo de datos
-- **Validaciones:** Qué validar antes de proceder
-- **Acciones paralelas:** Qué hacer simultáneamente
-- **Manejo de errores:** Qué hacer si algo falla
-
-**CONFIGURACIONES TÉCNICAS:**
-- **Webhooks:** URLs, métodos HTTP, autenticación
-- **APIs:** Endpoints, headers, parámetros
-- **Datos:** Estructura JSON, campos requeridos
-- **Integraciones:** Credenciales y permisos necesarios
-
-Sé extremadamente técnico y específico. Piensa como un arquitecto de software senior.`
+${consultoria}`
               }]
             }),
           });
