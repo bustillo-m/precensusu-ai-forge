@@ -560,29 +560,31 @@ Tu tarea es realizar una consultoría con el cliente para entender su empresa, p
               max_tokens: 2000,
               messages: [{
                 role: 'user',
-                content: `Eres un arquitecto de automatizaciones experto en n8n.  
-Recibirás un JSON con una automatización seleccionada por el cliente.  
+                content: `Eres un arquitecto de automatizaciones experto en n8n.
+Recibirás un JSON con una automatización seleccionada por el cliente.
 
 Tarea:
-1. Convierte esa descripción en un diseño técnico detallado de workflow en n8n.
-2. Identifica:
-   - Nodos requeridos (triggers, acciones, transformadores, condicionales, errores).
-   - Configuración de cada nodo (parámetros principales).
-   - Flujo lógico paso a paso de los datos.
-   - Manejo de excepciones o errores (qué pasa si un paso falla).
-   - Posibles variables dinámicas necesarias.
 
-3. Propón nombres cortos y claros para cada nodo (ej: "Trigger_Gmail", "Guardar_Drive", "Notificar_Slack").
+Convierte esa descripción en un diseño técnico detallado de workflow en n8n.
+
+Identifica:
+
+Nodos requeridos (triggers, acciones, transformadores, condicionales, errores).
+Configuración de cada nodo (parámetros principales).
+Flujo lógico paso a paso de los datos.
+Manejo de excepciones o errores (qué pasa si un paso falla).
+Posibles variables dinámicas necesarias.
+Propón nombres cortos y claros para cada nodo (ej: "Trigger_Gmail", "Guardar_Drive", "Notificar_Slack").
 
 Devuelve la salida en JSON:
 {
- "nodos_requeridos": [
-   {"tipo": "Trigger", "nombre": "...", "detalle": "..."},
-   {"tipo": "Accion", "nombre": "...", "detalle": "..."},
-   {"tipo": "Condicion", "nombre": "...", "detalle": "..."}
- ],
- "flujo_logico": "Descripción paso a paso",
- "manejo_errores": "..."
+"nodos_requeridos": [
+{"tipo": "Trigger", "nombre": "...", "detalle": "..."},
+{"tipo": "Accion", "nombre": "...", "detalle": "..."},
+{"tipo": "Condicion", "nombre": "...", "detalle": "..."}
+],
+"flujo_logico": "Descripción paso a paso",
+"manejo_errores": "..."
 }
 
 CONSULTORÍA EMPRESARIAL REALIZADA:

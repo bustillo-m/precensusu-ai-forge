@@ -11,9 +11,9 @@ This is a full-stack AI automation platform called "Fluix AI" that enables users
 - **Logo Integration**: Successfully integrated new company logo throughout the interface
 - **Color Palette**: Applied new brand colors (blue #1E3A8A, violet #6D28D9, white #F9FAFB)
 - **Migration Complete**: Successfully migrated from Supabase to local PostgreSQL with Drizzle ORM
-- **Multi-AI Workflow Generation**: Implemented intelligent workflow creation with phrase detection
-- **Smart Tool Selection**: AI now asks for specific tools (WhatsApp, platforms, storage) when creating agents
-- **Automatic JSON Generation**: Complete workflow from chat message to downloadable N8N JSON file
+- **Multi-AI Workflow Generation**: Completely restructured with specialized AI roles and real DeepSeek integration
+- **DeepSeek Integration**: Connected real DeepSeek API for advanced JSON workflow generation
+- **Specialized AI Orchestration**: ChatGPT (Consultor) → Claude (Arquitecto) → DeepSeek (Ingeniero) → ChatGPT-4o mini (Validador)
 - **Enhanced Chat Intelligence**: Detects creation requests and triggers multi-stage AI processing
 - **Database Schema**: Full schema with users, profiles, chat sessions, messages, workflows, automations, templates
 
