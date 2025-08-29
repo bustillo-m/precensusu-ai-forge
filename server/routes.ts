@@ -610,22 +610,23 @@ ${consultoria}`
         steps.push("⚠️ Claude API key no configurada, saltando diseño de arquitectura");
       }
 
-      // Step 3: DeepSeek → Ingeniero JSON / Generador técnico
+      // Step 3: DeepSeek → Ingeniero JSON / Generador técnico (API REAL)
       steps.push("⚙️ Generando JSON workflow con DeepSeek...");
       let workflowJson = "";
       
-      // Por ahora DeepSeek está simulado - usa ChatGPT con prompt específico de ingeniero JSON
-      const deepseekResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [{
-            role: 'system',
-            content: `Eres un ingeniero técnico especializado en n8n.  
+      if (process.env.DEEPSEEK_API_KEY) {
+        try {
+          const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'deepseek-chat',
+              messages: [{
+                role: 'system',
+                content: `Eres un ingeniero técnico especializado en n8n.  
 Recibirás un diseño en JSON con nodos requeridos y flujo lógico.  
 
 Tarea:
@@ -646,25 +647,86 @@ La salida debe ser un único objeto JSON válido como este:
  "nodes": [...],
  "connections": {...}
 }`
-          }, {
-            role: 'user',
-            content: `Convierte este diseño de arquitectura en un workflow JSON de n8n:\n\n${workflowDesign}`
-          }],
-          temperature: 0.1,
-          max_tokens: 2500,
-        }),
-      });
+              }, {
+                role: 'user',
+                content: `Convierte este diseño de arquitectura en un workflow JSON de n8n:\n\n${workflowDesign}`
+              }],
+              temperature: 0.1,
+              max_tokens: 2500,
+            }),
+          });
 
-      if (deepseekResponse.ok) {
-        const deepseekData = await deepseekResponse.json();
-        if (deepseekData.choices && deepseekData.choices[0]) {
-          workflowJson = deepseekData.choices[0].message.content;
-          steps.push("✅ JSON workflow generado");
-        } else {
-          throw new Error('Respuesta inválida de DeepSeek (simulado)');
+          if (deepseekResponse.ok) {
+            const deepseekData = await deepseekResponse.json();
+            if (deepseekData.choices && deepseekData.choices[0]) {
+              workflowJson = deepseekData.choices[0].message.content;
+              steps.push("✅ JSON workflow generado con DeepSeek real");
+            } else {
+              throw new Error('Respuesta inválida de DeepSeek');
+            }
+          } else {
+            throw new Error(`Error en DeepSeek: ${deepseekResponse.statusText}`);
+          }
+        } catch (deepseekError: any) {
+          console.error('DeepSeek API error:', deepseekError);
+          steps.push(`⚠️ DeepSeek: ${deepseekError.message}, usando fallback`);
+          
+          // Fallback a ChatGPT si DeepSeek falla
+          const fallbackResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [{
+                role: 'system',
+                content: `Eres un ingeniero técnico especializado en n8n. Genera un workflow JSON válido.`
+              }, {
+                role: 'user',
+                content: `Convierte este diseño en un workflow JSON de n8n:\n\n${workflowDesign}`
+              }],
+              temperature: 0.1,
+              max_tokens: 2500,
+            }),
+          });
+          
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            workflowJson = fallbackData.choices[0].message.content;
+            steps.push("✅ JSON generado con ChatGPT fallback");
+          } else {
+            throw new Error('Error en ambas APIs: DeepSeek y ChatGPT fallback');
+          }
         }
       } else {
-        throw new Error(`Error en DeepSeek (simulado): ${deepseekResponse.statusText}`);
+        steps.push("⚠️ DeepSeek API key no configurada, usando ChatGPT fallback");
+        
+        // Fallback a ChatGPT si no hay API key de DeepSeek
+        const fallbackResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{
+              role: 'system',
+              content: `Eres un ingeniero técnico especializado en n8n. Genera un workflow JSON válido.`
+            }, {
+              role: 'user',
+              content: `Convierte este diseño en un workflow JSON de n8n:\n\n${workflowDesign}`
+            }],
+            temperature: 0.1,
+            max_tokens: 2500,
+          }),
+        });
+        
+        const fallbackData = await fallbackResponse.json();
+        workflowJson = fallbackData.choices[0].message.content;
+        steps.push("✅ JSON generado con ChatGPT fallback");
       }
 
       // Step 4: ChatGPT-4o mini → Validador rápido & Ajustador final
