@@ -8,7 +8,7 @@ interface User {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User as UserIcon, Loader2, CheckCircle, XCircle, Plus, FileJson } from "lucide-react";
+import { Send, Bot, User as UserIcon, Loader2, CheckCircle, XCircle, Plus, FileJson, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import ReactMarkdown from "react-markdown";
@@ -122,18 +122,22 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
     if (!currentChatId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("chat_session_id", currentChatId)
-        .order("created_at", { ascending: true });
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
 
-      if (error) {
-        console.error("Error fetching messages:", error);
+      const response = await fetch(`/api/chat-sessions/${currentChatId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Error fetching messages:", response.statusText);
         return;
       }
 
-      setMessages((data || []) as Message[]);
+      const data = await response.json();
+      setMessages(data as Message[]);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -143,10 +147,16 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
     if (!currentChatId) return null;
 
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({
-          chat_session_id: currentChatId,
+      const token = localStorage.getItem('auth_token');
+      if (!token) return null;
+
+      const response = await fetch(`/api/chat-sessions/${currentChatId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
           content: message.content,
           sender: message.sender,
           ai_type: message.ai_type,
@@ -154,14 +164,14 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
           workflow_id: message.workflow_id,
           workflow_error: message.workflow_error,
         })
-        .select()
-        .single();
+      });
 
-      if (error) {
-        console.error("Error saving message:", error);
+      if (!response.ok) {
+        console.error("Error saving message:", response.statusText);
         return null;
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error("Error saving message:", error);
@@ -236,18 +246,19 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
           description: data.message,
         });
       } else {
-        throw new Error(data.error || 'Error desconocido');
+        throw new Error('Error desconocido');
       }
     } catch (error) {
       console.error('Error sending to n8n:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
           ? { 
               ...msg, 
               workflow_status: 'error',
-              workflow_error: error.message,
-              content: msg.content + `\n\n❌ Error al enviar a n8n: ${error.message}`
+              workflow_error: errorMessage,
+              content: msg.content + `\n\n❌ Error al enviar a n8n: ${errorMessage}`
             } 
           : msg
       ));
@@ -255,7 +266,7 @@ export function ChatArea({ user, currentChatId, onCreateChat }: ChatAreaProps) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: `No se pudo enviar la automatización a n8n: ${error.message}`,
+        description: `No se pudo enviar la automatización a n8n: ${errorMessage}`,
       });
     }
   };

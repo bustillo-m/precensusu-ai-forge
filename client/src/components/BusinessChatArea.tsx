@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Send, Bot, User as UserIcon, Lightbulb, Target, Settings, ArrowRight } from "lucide-react";
+import { WorkflowComplexityVisualization } from "./WorkflowComplexityVisualization";
 
 interface Message {
   id: string;
@@ -44,6 +45,8 @@ export function BusinessChatArea({ user, currentChatId, onCreateChat }: Business
   const [awaitingResponse, setAwaitingResponse] = useState(false);
   const [proposals, setProposals] = useState<any[]>([]);
   const [directAutomation, setDirectAutomation] = useState<string | null>(null);
+  const [latestWorkflow, setLatestWorkflow] = useState<any>(null);
+  const [showComplexityVisualization, setShowComplexityVisualization] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -746,6 +749,12 @@ Procesos: ${businessData.processes}`;
       const data = await response.json();
       console.log('Automation creation response:', data);
 
+      // Store workflow data for complexity analysis
+      if (data.workflowJson) {
+        setLatestWorkflow(data.workflowJson);
+        setShowComplexityVisualization(true);
+      }
+
       // Create download function for JSON if available
       const downloadJSON = (jsonData: any) => {
         const dataStr = JSON.stringify(jsonData, null, 2);
@@ -1169,6 +1178,31 @@ Haz clic en el botón de abajo para descargar el archivo JSON de tu automatizaci
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                   <span className="text-sm">Analizando tu empresa...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Workflow Complexity Visualization */}
+        {showComplexityVisualization && latestWorkflow && (
+          <div className="flex justify-start">
+            <div className="flex items-start gap-3 max-w-[85%]">
+              <Bot className="w-8 h-8 text-primary bg-primary/10 rounded-full p-1 flex-shrink-0 mt-1" />
+              <div className="bg-muted rounded-lg p-4 w-full">
+                <div className="mb-3">
+                  <h4 className="font-semibold text-sm mb-1">📊 Análisis de Complejidad del Workflow</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Analicemos la complejidad de tu automatización generada:
+                  </p>
+                </div>
+                <WorkflowComplexityVisualization 
+                  workflowData={latestWorkflow}
+                  showDetailedView={false}
+                  className="mb-2"
+                />
+                <div className="text-xs text-muted-foreground mt-3">
+                  💡 Haz clic en el indicador de complejidad para ver un análisis detallado
                 </div>
               </div>
             </div>
